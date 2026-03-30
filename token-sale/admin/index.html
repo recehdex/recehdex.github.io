@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="shortcut icon" type="image/png" href="https://cryptoreceh.com/favicon.png" />
+    <title>TokenSale ADMIN DASHBOARD</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.16.0/dist/web3.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0A0A0F;
+            color: #fff;
+            min-height: 100vh;
+            padding: 0.75rem;
+            position: relative;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 10% 20%, rgba(255, 215, 0, 0.03) 0%, transparent 30%),
+                radial-gradient(circle at 90% 70%, rgba(255, 215, 0, 0.03) 0%, transparent 30%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass-premium {
+            background: rgba(18, 18, 24, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .glass-premium:hover {
+            border-color: rgba(255, 215, 0, 0.4);
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.1);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #FFD700, #FFAA00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FFD700, #FFAA00);
+            color: #0A0A0F;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 40px;
+            border: none;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1.5px solid #FFD700;
+            color: #FFD700;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 40px;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: #FFD700;
+            color: #0A0A0F;
+            box-shadow: 0 0 20px #FFD700;
+        }
+
+        .btn-danger {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1.5px solid #FF4444;
+            color: #FF4444;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 40px;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-danger:hover {
+            background: #FF4444;
+            color: white;
+            box-shadow: 0 0 20px #FF4444;
+        }
+
+        .input-modern {
+            background: white;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            padding: 1rem 1.5rem;
+            color: black;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .input-modern:focus {
+            border-color: #FFD700;
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+            background: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            border-radius: 20px;
+            padding: 1rem 0.75rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #9CA3AF;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FFD700;
+            line-height: 1.2;
+        }
+
+        .stat-unit {
+            font-size: 0.7rem;
+            color: #FFD700;
+            opacity: 0.7;
+        }
+
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 40px;
+            padding: 0.5rem;
+        }
+
+        .nav-tab {
+            flex: 1 1 auto;
+            min-width: 80px;
+            padding: 0.75rem 1rem;
+            text-align: center;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #9CA3AF;
+            background: transparent;
+            white-space: nowrap;
+        }
+
+        .nav-tab i {
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255, 215, 0, 0.1);
+            color: #FFD700;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #FFD700, #FFAA00);
+            color: #0A0A0F;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Token info card */
+        .token-info {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 1rem;
+            border: 1px solid rgba(255, 215, 0, 0.15);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #9CA3AF;
+            font-size: 0.85rem;
+        }
+
+        .info-value {
+            color: #FFD700;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 40px;
+            padding: 0.25rem 1rem;
+            font-size: 0.7rem;
+            color: #FF4444;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #FF4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+            }
+        }
+
+        .modal-modern {
+            background: rgba(18, 18, 24, 0.98);
+            backdrop-filter: blur(30px);
+            border: 2px solid #FFD700;
+            border-radius: 32px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+        }
+
+        .main-container {
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .error-message {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid #FF4444;
+            border-radius: 16px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            color: #FF8888;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .warning-message {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #FFC107;
+            border-radius: 16px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            color: #FFD700;
+            font-size: 0.9rem;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10B981;
+            color: #10B981;
+            padding: 0.25rem 1rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+        }
+
+        .badge-warning {
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #FFD700;
+            color: #FFD700;
+            padding: 0.25rem 1rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="txModal" class="fixed inset-0 flex items-center justify-center z-50 hidden px-4"
+        style="background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);">
+        <div class="modal-modern">
+            <button onclick="closeTxModal()"
+                class="absolute top-4 right-4 text-gray-400 hover:text-[#FFD700] text-2xl transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+            <div id="txModalIcon" class="text-5xl mb-4 flex justify-center"></div>
+            <h3 id="txModalTitle" class="text-2xl font-bold gold-gradient text-center"></h3>
+            <p id="txModalMessage" class="text-gray-300 mt-3 text-sm text-center"></p>
+            <div id="txModalActions" class="mt-6 flex flex-col items-center gap-2 hidden"></div>
+        </div>
+    </div>
+
+    <div class="main-container space-y-4">
+
+        <div class="glass-premium p-5">
+            <div class="flex items-center gap-3">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFAA00] p-1">
+                    <img src="https://raw.githubusercontent.com/cryptorecehcom/images/refs/heads/main/receh-250x250.png"
+                        alt="RECEH" class="w-full h-full rounded-full object-cover border-2 border-[#FFD700]">
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black gold-gradient">ADMIN DASHBOARD</h1>
+                    <div class="live-badge mt-1">
+                        <span class="dot"></span>
+                        <span>OWNER ACCESS</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-premium p-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-shield-hal text-[#FFD700] text-xl"></i>
+                    <span class="font-semibold">Admin Wallet</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="walletStatusDesc" class="text-xs text-gray-400"></span>
+                    <button id="connectAdminBtn" class="btn-primary text-sm py-2 px-4">
+                        <i class="fa-solid fa-plug"></i> CONNECT
+                    </button>
+                </div>
+            </div>
+
+            <div id="walletDetail" class="hidden mt-4 pt-4 border-t border-[#FFD700]/20">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-400 text-sm">Admin Address</span>
+                    <div class="flex items-center gap-2">
+                        <span id="adminAddress" class="font-mono text-sm text-[#FFD700]"></span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-400 text-sm">Contract Owner</span>
+                    <div class="flex items-center gap-2">
+                        <span id="contractOwner" class="font-mono text-sm text-[#FFD700]"></span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-400 text-sm">Network</span>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span id="networkStatus" class="text-sm text-white">Riche Chain</span>
+                    </div>
+                </div>
+                <div id="ownershipStatus" class="text-center text-sm p-2 rounded-xl bg-black/30 mt-2"></div>
+            </div>
+        </div>
+
+        <div class="glass-premium p-4">
+            <div class="nav-tabs">
+                <div class="nav-tab active" data-tab="overview">
+                    <i class="fa-solid fa-chart-pie"></i> OVERVIEW
+                </div>
+                <div class="nav-tab" data-tab="sale">
+                    <i class="fa-solid fa-gear"></i> SALE
+                </div>
+                <div class="nav-tab" data-tab="whitelist">
+                    <i class="fa-solid fa-list"></i> WHITELIST
+                </div>
+                <div class="nav-tab" data-tab="withdraw">
+                    <i class="fa-solid fa-money-bill"></i> WITHDRAW
+                </div>
+                <div class="nav-tab" data-tab="emergency">
+                    <i class="fa-solid fa-triangle-exclamation"></i> EMERGENCY
+                </div>
+            </div>
+        </div>
+
+        <div id="content">
+
+            <div id="overview" class="tab-content">
+                <div class="glass-premium p-5">
+                    <div class="stats-grid mb-4">
+                        <div class="stat-item">
+                            <div class="stat-label">TOTAL RAISED</div>
+                            <div class="stat-value"><span id="adminWeiRaised">0</span></div>
+                            <div class="stat-unit">RIC</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">TOTAL SOLD</div>
+                            <div class="stat-value"><span id="adminTokensSold">0</span></div>
+                            <div class="stat-unit">RECEH</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">BALANCE</div>
+                            <div class="stat-value"><span id="adminContractBalance">0</span></div>
+                            <div class="stat-unit">RIC</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">STATUS</div>
+                            <div class="stat-value"><span id="adminSaleActive">-</span></div>
+                        </div>
+                    </div>
+
+                    <div class="token-info">
+                        <div class="info-row">
+                            <span class="info-label">Current Rate</span>
+                            <span class="info-value"><span id="adminRate">0</span> RECEH/RIC</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Min Purchase</span>
+                            <span class="info-value"><span id="adminMinPurchase">0</span> RIC</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Max Purchase</span>
+                            <span class="info-value"><span id="adminMaxPurchase">0</span> RIC</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Whitelist</span>
+                            <span class="info-value"><span id="adminWhitelistEnabled">DISABLED</span></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Paused</span>
+                            <span class="info-value"><span id="adminSalePaused">NO</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sale" class="tab-content hidden">
+                <div class="glass-premium p-5 space-y-4">
+                    <div>
+                        <h3 class="text-lg font-bold gold-gradient mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-right-arrow-left"></i> TOKEN RATE
+                        </h3>
+                        <div class="token-info mb-3">
+                            <div class="info-row">
+                                <span class="info-label">Current Rate</span>
+                                <span class="info-value"><span id="currentRate">0</span> RECEH/RIC</span>
+                            </div>
+                        </div>
+                        <input type="number" id="newRate" step="0.01" class="input-modern mb-2" placeholder="New rate">
+                        <button onclick="updateRate()" class="btn-primary w-full">UPDATE RATE</button>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold gold-gradient mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-up-down"></i> PURCHASE LIMITS
+                        </h3>
+                        <input type="number" id="newMinPurchase" step="0.1" class="input-modern mb-2"
+                            placeholder="Min purchase (RIC)">
+                        <button onclick="updateMinPurchase()" class="btn-secondary w-full mb-3">UPDATE MIN</button>
+
+                        <input type="number" id="newMaxPurchase" step="1" class="input-modern mb-2"
+                            placeholder="Max purchase (RIC)">
+                        <button onclick="updateMaxPurchase()" class="btn-secondary w-full">UPDATE MAX</button>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold gold-gradient mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-clock"></i> SALE TIMING
+                        </h3>
+                        <input type="number" id="saleDuration" class="input-modern mb-2"
+                            placeholder="Duration (seconds)">
+                        <button onclick="startSale()" class="btn-primary w-full mb-2">START SALE</button>
+
+                        <input type="number" id="extendTime" class="input-modern mb-2" placeholder="Extend (seconds)">
+                        <button onclick="extendSale()" class="btn-secondary w-full mb-2">EXTEND SALE</button>
+
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <button onclick="pauseSale()" class="btn-secondary">PAUSE</button>
+                            <button onclick="unpauseSale()" class="btn-primary">UNPAUSE</button>
+                        </div>
+                        <button onclick="stopSale()" class="btn-danger w-full">STOP SALE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="whitelist" class="tab-content hidden">
+                <div class="glass-premium p-5 space-y-4">
+                    <div>
+                        <h3 class="text-lg font-bold gold-gradient mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check"></i> WHITELIST CONTROL
+                        </h3>
+                        <div class="token-info mb-3">
+                            <div class="info-row">
+                                <span class="info-label">Current Mode</span>
+                                <span class="info-value"><span id="whitelistModeStatus">DISABLED</span></span>
+                            </div>
+                        </div>
+                        <button onclick="toggleWhitelist()" class="btn-secondary w-full mb-4">TOGGLE WHITELIST
+                            MODE</button>
+
+                        <label class="block text-gray-400 text-sm mb-2">Addresses (comma separated)</label>
+                        <textarea id="whitelistAddresses" rows="3" class="input-modern mb-2"
+                            placeholder="0x123..., 0x456..."></textarea>
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button onclick="updateWhitelist(true)" class="btn-primary">ADD</button>
+                            <button onclick="updateWhitelist(false)" class="btn-danger">REMOVE</button>
+                        </div>
+
+                        <label class="block text-gray-400 text-sm mb-2">Check Address</label>
+                        <input type="text" id="checkWhitelistAddress" class="input-modern mb-2" placeholder="0x...">
+                        <button onclick="checkWhitelist()" class="btn-secondary w-full">CHECK STATUS</button>
+                        <div id="whitelistResult" class="mt-3 p-3 bg-black/30 rounded-xl text-sm hidden"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="withdraw" class="tab-content hidden">
+                <div class="glass-premium p-5 space-y-4">
+                    <div>
+                        <h3 class="text-lg font-bold gold-gradient mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-dollar"></i> WITHDRAW FUNDS
+                        </h3>
+                        <div class="token-info mb-3">
+                            <div class="info-row">
+                                <span class="info-label">Available</span>
+                                <span class="info-value"><span id="withdrawableFunds">0 RIC</span></span>
+                            </div>
+                        </div>
+                        <button onclick="withdrawFunds()" class="btn-primary w-full">WITHDRAW ALL</button>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold gold-gradient mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-coins"></i> WITHDRAW TOKENS
+                        </h3>
+                        <div class="token-info mb-3">
+                            <div class="info-row">
+                                <span class="info-label">Unsold</span>
+                                <span class="info-value"><span id="unsoldTokens">0 RECEH</span></span>
+                            </div>
+                        </div>
+                        <input type="number" id="withdrawTokenAmount" class="input-modern mb-2"
+                            placeholder="Amount to withdraw">
+                        <button onclick="withdrawUnsoldTokens()" class="btn-secondary w-full">WITHDRAW</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="emergency" class="tab-content hidden">
+                <div class="glass-premium p-5 space-y-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-red-400 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> EMERGENCY WITHDRAW
+                        </h3>
+                        <input type="text" id="emergencyTokenAddress" class="input-modern mb-2"
+                            placeholder="Token address">
+                        <input type="number" id="emergencyTokenAmount" class="input-modern mb-2" placeholder="Amount">
+                        <button onclick="emergencyWithdrawToken()" class="btn-danger w-full mb-4">EMERGENCY
+                            WITHDRAW</button>
+
+                        <h3 class="text-lg font-bold gold-gradient mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-key"></i> OWNERSHIP
+                        </h3>
+                        <input type="text" id="newOwnerAddress" class="input-modern mb-2"
+                            placeholder="New owner address">
+                        <button onclick="transferOwnership()" class="btn-secondary w-full">TRANSFER OWNERSHIP</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-premium p-4 text-center text-gray-600 text-xs">
+            © 2026 TokenSale Admin Dashboard
+        </div>
+    </div>
+
+    <script>
+
+        const CONFIG = {
+            SALE_ADDRESS: "0x1b58BaB982Bd2F705033ef2b5b9484BcaeeD85D1",
+            TOKEN_ADDRESS: "0x4c9C431Fa7fD104c0E7230d20E1623E62019A1C5",
+            CHAIN_ID: "0x203BA",
+            CHAIN_NAME: "Riche Chain",
+            TOTAL_SUPPLY: 100_000_000,
+            PRESALE_ALLOCATION: 30_000,
+            RPC: "https://seed-richechain.com/",
+            TOKEN_SYMBOL: "RECEH",
+            TOKEN_DECIMALS: 18,
+            NATIVE_SYMBOL: "RIC",
+            EXPLORER: "https://richescan.com"
+        };
+
+        const SALE_ABI = [{ "inputs": [{ "internalType": "uint256", "name": "_rate", "type": "uint256" }, { "internalType": "address", "name": "_token", "type": "address" }, { "internalType": "uint256", "name": "_maxPurchase", "type": "uint256" }, { "internalType": "address", "name": "_initialOwner", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [], "name": "AmountExceedsUnsold", "type": "error" }, { "inputs": [], "name": "BelowMinPurchase", "type": "error" }, { "inputs": [], "name": "EnforcedPause", "type": "error" }, { "inputs": [], "name": "ExpectedPause", "type": "error" }, { "inputs": [], "name": "InsufficientTokens", "type": "error" }, { "inputs": [], "name": "InvalidDuration", "type": "error" }, { "inputs": [], "name": "MaxPurchaseReached", "type": "error" }, { "inputs": [], "name": "NoFundsToWithdraw", "type": "error" }, { "inputs": [], "name": "NotWhitelisted", "type": "error" }, { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }], "name": "OwnableInvalidOwner", "type": "error" }, { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "OwnableUnauthorizedAccount", "type": "error" }, { "inputs": [], "name": "ReentrancyGuardReentrantCall", "type": "error" }, { "inputs": [], "name": "SaleEnded", "type": "error" }, { "inputs": [], "name": "SaleNotActive", "type": "error" }, { "inputs": [], "name": "SaleNotStarted", "type": "error" }, { "inputs": [], "name": "TransferFailed", "type": "error" }, { "inputs": [], "name": "ZeroAddress", "type": "error" }, { "inputs": [], "name": "ZeroAmount", "type": "error" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "FundsWithdrawn", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "newMaxPurchase", "type": "uint256" }], "name": "MaxPurchaseUpdated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "newMinPurchase", "type": "uint256" }], "name": "MinPurchaseUpdated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "account", "type": "address" }], "name": "Paused", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "newRate", "type": "uint256" }], "name": "RateUpdated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "startTime", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "endTime", "type": "uint256" }], "name": "SaleStarted", "type": "event" }, { "anonymous": false, "inputs": [], "name": "SaleStopped", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "token", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "TokensWithdrawn", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "purchaser", "type": "address" }, { "indexed": true, "internalType": "address", "name": "beneficiary", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "TokensPurchased", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "account", "type": "address" }], "name": "Unpaused", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "bool", "name": "status", "type": "bool" }], "name": "WhitelistUpdated", "type": "event" }, { "stateMutability": "payable", "type": "fallback" }, { "stateMutability": "payable", "type": "receive" }, { "inputs": [{ "internalType": "address", "name": "beneficiary", "type": "address" }], "name": "buyTokens", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "tokenAddress", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "emergencyWithdrawToken", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "additionalTime", "type": "uint256" }], "name": "extendSale", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "buyer", "type": "address" }], "name": "getMaxPurchase", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "buyer", "type": "address" }], "name": "getPurchasedAmount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getSaleStatus", "outputs": [{ "internalType": "bool", "name": "isActive", "type": "bool" }, { "internalType": "bool", "name": "hasStarted", "type": "bool" }, { "internalType": "bool", "name": "hasEnded", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getTimeRemaining", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "weiAmount", "type": "uint256" }], "name": "getTokenAmount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getTokenBalance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getTotalTokensSold", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "isWhitelisted", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "pause", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "paused", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "purchasedAmounts", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "rate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "saleActive", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "saleEndTime", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "saleStartTime", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "newMaxPurchase", "type": "uint256" }], "name": "setMaxPurchase", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "newMinPurchase", "type": "uint256" }], "name": "setMinPurchase", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "newRate", "type": "uint256" }], "name": "setRate", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "bool", "name": "enabled", "type": "bool" }], "name": "setWhitelistEnabled", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "duration", "type": "uint256" }], "name": "startSale", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "stopSale", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "token", "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "unpause", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "addresses", "type": "address[]" }, { "internalType": "bool", "name": "status", "type": "bool" }], "name": "updateWhitelist", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "weiMaxPurchase", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "weiMinPurchase", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "weiRaised", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "whitelistEnabled", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "withdrawFunds", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "withdrawUnsoldTokens", "outputs": [], "stateMutability": "nonpayable", "type": "function" }];
+        const TOKEN_ABI = [{ "constant": true, "inputs": [{ "name": "_owner", "type": "address" }], "name": "balanceOf", "outputs": [{ "name": "balance", "type": "uint256" }], "type": "function" }];
+
+        let web3Read = null;
+        let web3Write = null;
+        let saleContractRead = null;
+        let tokenContractRead = null;
+        let saleContractWrite = null;
+        let adminAccount = null;
+        let isNetworkCorrect = false;
+        let provider = null;
+        let contractOwner = null;
+        let isOwner = false;
+
+        function shortenAddress(addr) {
+            return addr ? addr.slice(0, 6) + '...' + addr.slice(-4) : '';
+        }
+
+        function detectProvider() {
+            return window.ethereum || (window.web3 && window.web3.currentProvider) || null;
+        }
+
+        function showTxModal(state, title, message, txHash = null) {
+            const modal = document.getElementById('txModal');
+            document.getElementById('txModalIcon').innerHTML = state === 'loading'
+                ? '<i class="fa-solid fa-circle-notch fa-spin text-[#FFD700] text-5xl"></i>'
+                : (state === 'success'
+                    ? '<i class="fa-solid fa-circle-check text-[#FFD700] text-5xl"></i>'
+                    : '<i class="fa-solid fa-circle-exclamation text-[#FFD700] text-5xl"></i>');
+            document.getElementById('txModalTitle').innerText = title;
+            document.getElementById('txModalMessage').innerText = message;
+
+            const actionsContainer = document.getElementById('txModalActions');
+            actionsContainer.innerHTML = '';
+
+            if (txHash) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-secondary text-sm py-2 px-4';
+                btn.innerHTML = '<i class="fa-solid fa-up-right-from-square"></i> View on Explorer';
+                btn.onclick = () => window.open(`${CONFIG.EXPLORER}/tx/${txHash}`, '_blank');
+                actionsContainer.appendChild(btn);
+                actionsContainer.classList.remove('hidden');
+            } else {
+                actionsContainer.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeTxModal() {
+            document.getElementById('txModal').classList.add('hidden');
+        }
+
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+                document.getElementById(tab.dataset.tab).classList.remove('hidden');
+            });
+        });
+
+        function updateWalletButton() {
+            const btn = document.getElementById('connectAdminBtn');
+            const statusDesc = document.getElementById('walletStatusDesc');
+            const walletDetail = document.getElementById('walletDetail');
+
+            if (!adminAccount) {
+                btn.innerHTML = '<i class="fa-solid fa-plug"></i> CONNECT';
+                btn.className = 'btn-primary text-sm py-2 px-4';
+                btn.onclick = () => connectAdmin(false);
+                walletDetail.classList.add('hidden');
+                if (statusDesc) statusDesc.innerText = 'Not connected';
+            } else if (!isNetworkCorrect) {
+                btn.innerHTML = '<i class="fa-solid fa-arrows-spin"></i> SWITCH TO RICHE';
+                btn.className = 'btn-secondary text-sm py-2 px-4';
+                btn.onclick = switchToRicheChain;
+                walletDetail.classList.remove('hidden');
+                document.getElementById('adminAddress').innerText = shortenAddress(adminAccount);
+                if (statusDesc) statusDesc.innerText = 'Wrong network';
+            } else if (!isOwner) {
+                btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> NOT OWNER';
+                btn.className = 'btn-danger text-sm py-2 px-4';
+                btn.onclick = disconnectAdmin;
+                walletDetail.classList.remove('hidden');
+                document.getElementById('adminAddress').innerText = shortenAddress(adminAccount);
+                document.getElementById('contractOwner').innerText = shortenAddress(contractOwner);
+                document.getElementById('ownershipStatus').innerHTML = '<span class="text-red-400">❌ Not Contract Owner</span>';
+                if (statusDesc) statusDesc.innerText = 'Access denied';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> DISCONNECT';
+                btn.className = 'btn-secondary text-sm py-2 px-4';
+                btn.onclick = disconnectAdmin;
+                walletDetail.classList.remove('hidden');
+                document.getElementById('adminAddress').innerText = shortenAddress(adminAccount);
+                document.getElementById('contractOwner').innerText = shortenAddress(contractOwner);
+                document.getElementById('ownershipStatus').innerHTML = '<span class="text-green-400">✓ Verified Owner</span>';
+                if (statusDesc) statusDesc.innerText = 'Connected';
+            }
+        }
+
+        function disconnectAdmin() {
+            adminAccount = null;
+            isNetworkCorrect = false;
+            isOwner = false;
+            contractOwner = null;
+            updateWalletButton();
+        }
+
+        async function initReadContract() {
+            try {
+                web3Read = new Web3(CONFIG.RPC);
+                saleContractRead = new web3Read.eth.Contract(SALE_ABI, CONFIG.SALE_ADDRESS);
+                tokenContractRead = new web3Read.eth.Contract(TOKEN_ABI, CONFIG.TOKEN_ADDRESS);
+                await saleContractRead.methods.rate().call();
+                console.log('✅ Read contract OK');
+                return true;
+            } catch (e) {
+                console.error('❌ Read contract error:', e);
+                return false;
+            }
+        }
+
+        async function loadAdminData() {
+            if (!saleContractRead) return;
+
+            try {
+                const rateWei = await saleContractRead.methods.rate().call();
+                const rate = parseFloat(web3Read.utils.fromWei(rateWei, 'ether'));
+
+                const weiRaisedWei = await saleContractRead.methods.weiRaised().call();
+                const weiRaised = parseFloat(web3Read.utils.fromWei(weiRaisedWei, 'ether'));
+
+                const soldTokens = weiRaised * rate;
+
+                const contractBalanceWei = await web3Read.eth.getBalance(CONFIG.SALE_ADDRESS);
+                const contractBalance = web3Read.utils.fromWei(contractBalanceWei, 'ether');
+
+                const minPurchaseWei = await saleContractRead.methods.weiMinPurchase().call();
+                const maxPurchaseWei = await saleContractRead.methods.weiMaxPurchase().call();
+
+                const saleActive = await saleContractRead.methods.saleActive().call();
+                const paused = await saleContractRead.methods.paused().call();
+                const whitelistEnabled = await saleContractRead.methods.whitelistEnabled().call();
+
+                document.getElementById('adminWeiRaised').innerText = weiRaised.toFixed(2);
+                document.getElementById('adminTokensSold').innerText = Math.round(soldTokens).toLocaleString();
+                document.getElementById('adminContractBalance').innerText = parseFloat(contractBalance).toFixed(4);
+                document.getElementById('adminRate').innerText = rate.toFixed(2);
+                document.getElementById('adminMinPurchase').innerText = web3Read.utils.fromWei(minPurchaseWei, 'ether');
+                document.getElementById('adminMaxPurchase').innerText = web3Read.utils.fromWei(maxPurchaseWei, 'ether');
+
+                document.getElementById('adminSaleActive').innerHTML = saleActive ? 'ACTIVE' : 'INACTIVE';
+                document.getElementById('adminSalePaused').innerText = paused ? 'YES' : 'NO';
+                document.getElementById('adminWhitelistEnabled').innerText = whitelistEnabled ? 'ENABLED' : 'DISABLED';
+                document.getElementById('whitelistModeStatus').innerText = whitelistEnabled ? 'ENABLED' : 'DISABLED';
+
+                document.getElementById('currentRate').innerText = rate.toFixed(2);
+                document.getElementById('withdrawableFunds').innerText = parseFloat(contractBalance).toFixed(4) + ' RIC';
+
+                const tokenBalanceWei = await tokenContractRead.methods.balanceOf(CONFIG.SALE_ADDRESS).call();
+                const tokenBalance = web3Read.utils.fromWei(tokenBalanceWei, 'ether');
+                document.getElementById('unsoldTokens').innerText = Math.round(parseFloat(tokenBalance)).toLocaleString() + ' RECEH';
+
+            } catch (e) {
+                console.error('loadAdminData error:', e);
+            }
+        }
+
+        async function connectAdmin(silent = false) {
+            provider = detectProvider();
+
+            if (!provider) {
+                showTxModal('error', 'Wallet Not Found', 'Please install MetaMask');
+                return;
+            }
+
+            if (!saleContractRead) {
+                await initReadContract();
+            }
+
+            try {
+                const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                if (!accounts?.length) throw new Error('No accounts');
+
+                adminAccount = accounts[0];
+                web3Write = new Web3(provider);
+                saleContractWrite = new web3Write.eth.Contract(SALE_ABI, CONFIG.SALE_ADDRESS);
+
+                await checkNetwork();
+
+                if (isNetworkCorrect) {
+                    contractOwner = await saleContractRead.methods.owner().call();
+                    isOwner = adminAccount.toLowerCase() === contractOwner.toLowerCase();
+
+                    if (isOwner) {
+                        await loadAdminData();
+                    }
+                }
+
+                updateWalletButton();
+
+                if (!silent) {
+                    if (!isNetworkCorrect) {
+                        showTxModal('warning', 'Wrong Network', `Please switch to ${CONFIG.CHAIN_NAME}`);
+                    } else if (!isOwner) {
+                        showTxModal('error', 'Access Denied', 'You are not the contract owner');
+                    } else {
+                        showTxModal('success', 'Connected', 'Welcome, Contract Owner!');
+                    }
+                }
+            } catch (error) {
+                console.error('Connect error:', error);
+                if (!silent) showTxModal('error', 'Connection Failed', error.message);
+            }
+        }
+
+        async function checkNetwork() {
+            if (!provider) return false;
+            try {
+                const chainId = await provider.request({ method: 'eth_chainId' });
+                isNetworkCorrect = chainId.toLowerCase() === CONFIG.CHAIN_ID.toLowerCase();
+                return isNetworkCorrect;
+            } catch (e) {
+                isNetworkCorrect = false;
+                return false;
+            }
+        }
+
+        async function switchToRicheChain() {
+            if (!provider) return;
+
+            try {
+                await provider.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: CONFIG.CHAIN_ID }]
+                });
+
+                setTimeout(async () => {
+                    await checkNetwork();
+                    if (isNetworkCorrect) {
+                        contractOwner = await saleContractRead.methods.owner().call();
+                        isOwner = adminAccount.toLowerCase() === contractOwner.toLowerCase();
+                        if (isOwner) await loadAdminData();
+                        updateWalletButton();
+                    }
+                }, 1000);
+            } catch (e) {
+                if (e.code === 4902) {
+                    try {
+                        await provider.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: CONFIG.CHAIN_ID,
+                                chainName: CONFIG.CHAIN_NAME,
+                                rpcUrls: [CONFIG.RPC],
+                                nativeCurrency: {
+                                    name: CONFIG.NATIVE_SYMBOL,
+                                    symbol: CONFIG.NATIVE_SYMBOL,
+                                    decimals: 18
+                                },
+                                blockExplorerUrls: [CONFIG.EXPLORER]
+                            }]
+                        });
+                    } catch (addErr) {
+                        console.error('Add chain error:', addErr);
+                    }
+                }
+            }
+        }
+
+        function handleAccountsChanged(accounts) {
+            if (!accounts.length) {
+                adminAccount = null;
+                isNetworkCorrect = false;
+                isOwner = false;
+                updateWalletButton();
+            } else {
+                adminAccount = accounts[0];
+                checkNetwork().then(() => {
+                    if (isNetworkCorrect) {
+                        saleContractRead.methods.owner().call().then(owner => {
+                            contractOwner = owner;
+                            isOwner = adminAccount.toLowerCase() === contractOwner.toLowerCase();
+                            if (isOwner) loadAdminData();
+                            updateWalletButton();
+                        });
+                    } else {
+                        updateWalletButton();
+                    }
+                });
+            }
+        }
+
+        async function updateRate() {
+            if (!isOwner) return;
+            const newRate = document.getElementById('newRate').value;
+            if (!newRate || newRate <= 0) return;
+
+            try {
+                showTxModal('loading', 'Updating Rate...', 'Please wait');
+                const rateWei = web3Write.utils.toWei(newRate.toString(), 'ether');
+                const tx = await saleContractWrite.methods.setRate(rateWei).send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Rate Updated!', `New rate: ${newRate} RECEH/RIC`, tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Update Failed', error.message);
+            }
+        }
+
+        async function updateMinPurchase() {
+            if (!isOwner) return;
+            const newMin = document.getElementById('newMinPurchase').value;
+            if (!newMin || newMin <= 0) return;
+
+            try {
+                showTxModal('loading', 'Updating Min Purchase...', 'Please wait');
+                const minWei = web3Write.utils.toWei(newMin.toString(), 'ether');
+                const tx = await saleContractWrite.methods.setMinPurchase(minWei).send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Min Purchase Updated!', `New minimum: ${newMin} RIC`, tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Update Failed', error.message);
+            }
+        }
+
+        async function updateMaxPurchase() {
+            if (!isOwner) return;
+            const newMax = document.getElementById('newMaxPurchase').value;
+            if (!newMax || newMax <= 0) return;
+
+            try {
+                showTxModal('loading', 'Updating Max Purchase...', 'Please wait');
+                const maxWei = web3Write.utils.toWei(newMax.toString(), 'ether');
+                const tx = await saleContractWrite.methods.setMaxPurchase(maxWei).send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Max Purchase Updated!', `New maximum: ${newMax} RIC`, tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Update Failed', error.message);
+            }
+        }
+
+        async function startSale() {
+            if (!isOwner) return;
+            const duration = document.getElementById('saleDuration').value;
+            if (!duration || duration <= 0) return;
+
+            try {
+                showTxModal('loading', 'Starting Sale...', 'Please wait');
+                const tx = await saleContractWrite.methods.startSale(duration).send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Sale Started!', `Duration: ${duration} seconds`, tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Start Failed', error.message);
+            }
+        }
+
+        async function extendSale() {
+            if (!isOwner) return;
+            const additionalTime = document.getElementById('extendTime').value;
+            if (!additionalTime || additionalTime <= 0) return;
+
+            try {
+                showTxModal('loading', 'Extending Sale...', 'Please wait');
+                const tx = await saleContractWrite.methods.extendSale(additionalTime).send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Sale Extended!', `Added ${additionalTime} seconds`, tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Extension Failed', error.message);
+            }
+        }
+
+        async function stopSale() {
+            if (!isOwner) return;
+            if (!confirm('Are you sure?')) return;
+
+            try {
+                showTxModal('loading', 'Stopping Sale...', 'Please wait');
+                const tx = await saleContractWrite.methods.stopSale().send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Sale Stopped!', 'Sale has been stopped', tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Stop Failed', error.message);
+            }
+        }
+
+        async function pauseSale() {
+            if (!isOwner) return;
+            try {
+                showTxModal('loading', 'Pausing Sale...', 'Please wait');
+                const tx = await saleContractWrite.methods.pause().send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Sale Paused!', 'Sale is paused', tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Pause Failed', error.message);
+            }
+        }
+
+        async function unpauseSale() {
+            if (!isOwner) return;
+            try {
+                showTxModal('loading', 'Unpausing Sale...', 'Please wait');
+                const tx = await saleContractWrite.methods.unpause().send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Sale Unpaused!', 'Sale is active', tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Unpause Failed', error.message);
+            }
+        }
+
+        async function toggleWhitelist() {
+            if (!isOwner) return;
+            try {
+                const current = await saleContractRead.methods.whitelistEnabled().call();
+                showTxModal('loading', 'Toggling Whitelist...', 'Please wait');
+                const tx = await saleContractWrite.methods.setWhitelistEnabled(!current).send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Whitelist Updated!', `Mode: ${!current ? 'ENABLED' : 'DISABLED'}`, tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Update Failed', error.message);
+            }
+        }
+
+        async function updateWhitelist(add) {
+            if (!isOwner) return;
+            const addressesText = document.getElementById('whitelistAddresses').value;
+            if (!addressesText) return;
+
+            const addresses = addressesText.split(',').map(addr => addr.trim()).filter(addr => addr.startsWith('0x'));
+
+            try {
+                showTxModal('loading', 'Updating Whitelist...', 'Please wait');
+                const tx = await saleContractWrite.methods.updateWhitelist(addresses, add).send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Whitelist Updated!', `${addresses.length} addresses updated`, tx.transactionHash);
+                document.getElementById('whitelistAddresses').value = '';
+            } catch (error) {
+                showTxModal('error', 'Update Failed', error.message);
+            }
+        }
+
+        async function checkWhitelist() {
+            const address = document.getElementById('checkWhitelistAddress').value;
+            if (!address) return;
+
+            try {
+                const isWhitelisted = await saleContractRead.methods.isWhitelisted(address).call();
+                const resultDiv = document.getElementById('whitelistResult');
+                resultDiv.classList.remove('hidden');
+                resultDiv.innerHTML = isWhitelisted
+                    ? `<span class="text-green-400">✓ ${shortenAddress(address)} is whitelisted</span>`
+                    : `<span class="text-red-400">✗ ${shortenAddress(address)} is NOT whitelisted</span>`;
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function withdrawFunds() {
+            if (!isOwner) return;
+            if (!confirm('Withdraw all funds?')) return;
+
+            try {
+                showTxModal('loading', 'Withdrawing Funds...', 'Please wait');
+                const tx = await saleContractWrite.methods.withdrawFunds().send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Funds Withdrawn!', 'Success', tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Withdraw Failed', error.message);
+            }
+        }
+
+        async function withdrawUnsoldTokens() {
+            if (!isOwner) return;
+            const amount = document.getElementById('withdrawTokenAmount').value;
+            if (!amount || amount <= 0) return;
+
+            try {
+                showTxModal('loading', 'Withdrawing Tokens...', 'Please wait');
+                const amountWei = web3Write.utils.toWei(amount.toString(), 'ether');
+                const tx = await saleContractWrite.methods.withdrawUnsoldTokens(amountWei).send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Tokens Withdrawn!', `${amount} RECEH withdrawn`, tx.transactionHash);
+                await loadAdminData();
+            } catch (error) {
+                showTxModal('error', 'Withdraw Failed', error.message);
+            }
+        }
+
+        async function emergencyWithdrawToken() {
+            if (!isOwner) return;
+            const tokenAddress = document.getElementById('emergencyTokenAddress').value;
+            const amount = document.getElementById('emergencyTokenAmount').value;
+            if (!tokenAddress || !amount) return;
+
+            if (!confirm('⚠️ EMERGENCY WITHDRAW - Are you sure?')) return;
+
+            try {
+                showTxModal('loading', 'Emergency Withdraw...', 'Please wait');
+                const amountWei = web3Write.utils.toWei(amount.toString(), 'ether');
+                const tx = await saleContractWrite.methods.emergencyWithdrawToken(tokenAddress, amountWei).send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Emergency Withdraw Complete!', 'Success', tx.transactionHash);
+            } catch (error) {
+                showTxModal('error', 'Withdraw Failed', error.message);
+            }
+        }
+
+        async function transferOwnership() {
+            if (!isOwner) return;
+            const newOwner = document.getElementById('newOwnerAddress').value;
+            if (!newOwner) return;
+
+            if (!confirm(`⚠️ Transfer ownership to ${newOwner}?`)) return;
+
+            try {
+                showTxModal('loading', 'Transferring Ownership...', 'Please wait');
+                const tx = await saleContractWrite.methods.transferOwnership(newOwner).send({ from: adminAccount, gas: 300000 });
+                showTxModal('success', 'Ownership Transferred!', `New owner: ${shortenAddress(newOwner)}`, tx.transactionHash);
+                isOwner = false;
+                updateWalletButton();
+            } catch (error) {
+                showTxModal('error', 'Transfer Failed', error.message);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            provider = detectProvider();
+            await initReadContract();
+
+            document.getElementById('connectAdminBtn').addEventListener('click', () => connectAdmin(false));
+
+            if (provider) {
+                provider.on('accountsChanged', handleAccountsChanged);
+                provider.on('chainChanged', () => window.location.reload());
+            }
+
+            if (provider) {
+                try {
+                    const accounts = await provider.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) await connectAdmin(true);
+                } catch (e) { }
+            }
+
+            updateWalletButton();
+        });
+
+        setInterval(() => {
+            if (isOwner) loadAdminData();
+        }, 15000);
+
+        window.closeTxModal = closeTxModal;
+        window.updateRate = updateRate;
+        window.updateMinPurchase = updateMinPurchase;
+        window.updateMaxPurchase = updateMaxPurchase;
+        window.startSale = startSale;
+        window.extendSale = extendSale;
+        window.stopSale = stopSale;
+        window.pauseSale = pauseSale;
+        window.unpauseSale = unpauseSale;
+        window.toggleWhitelist = toggleWhitelist;
+        window.updateWhitelist = updateWhitelist;
+        window.checkWhitelist = checkWhitelist;
+        window.withdrawFunds = withdrawFunds;
+        window.withdrawUnsoldTokens = withdrawUnsoldTokens;
+        window.emergencyWithdrawToken = emergencyWithdrawToken;
+        window.transferOwnership = transferOwnership;
+    </script>
+</body>
+
+</html>

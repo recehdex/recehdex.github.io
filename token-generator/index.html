@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="shortcut icon" type="image/png" href="https://cryptoreceh.com/favicon.png" />
+    <title>Instant Crypto Token Creator | Deploy ERC20 & BEP20 Tokens Fast</title>
+    <meta name="description"
+        content="Zero-code platform for creating standard cryptocurrency tokens on multiple blockchains. Launch ERC-20 or BEP-20 tokens in seconds using a simple and fast Web3 interface.">
+    <meta name="keywords"
+        content="crypto token creator, token generator, ERC20 token maker, BEP20 token creator, blockchain token tool, no-code token platform, smart contract deployment, cryptocurrency token creation, Web3 token tool, multi-chain token">
+
+    <meta property="og:title" content="Create Your Own Crypto Token in Seconds - No Coding Needed">
+    <meta property="og:description"
+        content="Deploy standard ERC-20 and BEP-20 tokens instantly on BNB Chain, Core Chain, and other networks. The fastest and simplest token creation platform for Web3 projects.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://app.cryptoreceh.com/">
+    <meta property="og:image" content="https://cryptoreceh.com/favicon.png">
+    <meta property="og:site_name" content="Crypto RECEH Token Platform">
+    <meta property="og:locale" content="en_US">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Create Your Own Crypto Token in Seconds - No Coding Needed">
+    <meta name="twitter:description"
+        content="Instant token deployment for blockchain projects. Create ERC-20 and BEP-20 tokens without writing any code.">
+    <meta name="twitter:image" content="https://cryptoreceh.com/favicon.png">
+    <meta name="twitter:creator" content="@CryptoRECEHcom">
+
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Crypto RECEH Token Creator Platform",
+            "description": "No-code platform for generating standard cryptocurrency tokens such as ERC-20 and BEP-20 across multiple blockchains.",
+            "url": "https://app.cryptoreceh.com/",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "Web",
+            "offers": {
+                "@type": "Offer",
+                "price": "0.00",
+                "priceCurrency": "USD"
+            },
+            "creator": {
+                "@type": "Organization",
+                "name": "Crypto RECEH Platform",
+                "url": "https://cryptoreceh.com/"
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;500;700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+
+<body>
+
+    <div class="loading-screen" id="loadingScreen">
+        <div class="hologram-loader">
+            <div class="hologram-ring"></div>
+            <div class="hologram-ring"></div>
+            <div class="hologram-ring"></div>
+        </div>
+        <div class="logo-explosion">CRYPTORECEH</div>
+        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">Where Crypto Ideas Become Real</p>
+    </div>
+
+    <div class="lightning-background">
+        <div class="lightning"></div>
+        <div class="lightning"></div>
+        <div class="lightning"></div>
+        <div class="lightning"></div>
+        <div class="lightning"></div>
+    </div>
+
+    <div class="grid-overlay"></div>
+
+    <div class="confetti-container" id="confettiContainer"></div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup" id="popup">
+            <button class="popup-close" id="popupClose" aria-label="Close popup">&times;</button>
+            <div class="popup-icon" id="popupIcon">
+                <i class="fas fa-check" aria-hidden="true"></i>
+            </div>
+            <h3 class="popup-title" id="popupTitle">Title</h3>
+
+            <div class="popup-content">
+                <div class="popup-message" id="popupMessage">Message</div>
+
+                <div class="popup-details" id="popupDetails" style="display: none;">
+                    <h4>Transaction Details</h4>
+                    <div class="popup-tx-hash" id="popupTxHash"></div>
+                </div>
+
+                <div class="token-address-container" id="tokenAddressContainer" style="display: none;">
+                    <div class="token-address-label">
+                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                        <span>Your Token Contract Address:</span>
+                    </div>
+                    <input type="text" class="token-address-input" id="tokenAddressInput" readonly
+                        aria-label="Successfully created token address">
+                    <div class="token-actions">
+                        <button class="btn copy-address-btn" id="copyTokenAddressBtn">
+                            <i class="fas fa-copy" aria-hidden="true"></i> Copy Address
+                        </button>
+                        <button class="btn btn-success" id="addTokenToWalletBtn">
+                            <i class="fas fa-wallet" aria-hidden="true"></i> Add to Wallet
+                        </button>
+                        <button class="btn view-explorer-btn" id="viewExplorerBtn">
+                            <i class="fas fa-external-link-alt" aria-hidden="true"></i> View Explorer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="popup-actions" id="popupActions"></div>
+        </div>
+    </div>
+
+    <div class="mobile-modal" id="mobileModal">
+        <div class="mobile-modal-content">
+            <h3><i class="fas fa-mobile-alt" aria-hidden="true"></i> Use DApp Browser</h3>
+            <p>This page uses Web3 and functions fully only when accessed from desktop with wallet extensions like
+                MetaMask. If you're on mobile, copy this URL and open it through the DApp Browser in your wallet
+                application (MetaMask, Trust Wallet, Bitget, etc.) to enable token creation features.</p>
+            <div class="mobile-modal-buttons">
+                <button class="btn btn-primary" onclick="copyUrlAndClose()">
+                    <i class="fas fa-copy" aria-hidden="true"></i> Copy URL
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <header role="banner">
+        <div class="container nav-container">
+            <a href="https://cryptoreceh.com/" class="logo" aria-label="Token Creator Platform - Return to homepage">
+                <img src="https://cryptoreceh.com/favicon.png" alt="Token Creator Platform Logo">
+                <span>Crypto RECEH</span>
+            </a>
+
+            <nav class="nav-links" role="navigation" aria-label="Main navigation">
+                <a href="https://cryptoreceh.com/"><i class="fas fa-home" aria-hidden="true"></i> Home</a>
+                <a href="https://app.cryptoreceh.com/token-sale/"><i class="fas fa-rocket" aria-hidden="true"></i> Token
+                    Sale</a>
+                <a href="https://cryptoreceh.com/blog/"><i class="fa-brands fa-blogger"></i> Blog & News</a>
+            </nav>
+
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu" aria-expanded="false"
+                aria-controls="mobileNav">
+                <i class="fas fa-bars" aria-hidden="true"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="sticky-step-indicator" id="stickyStepIndicator">
+        <div class="step-indicator" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="4"
+            aria-label="Token creation process">
+            <div class="step active">
+                <div class="step-number">1</div>
+                <div class="step-label">Select Network</div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-label">Connect Wallet</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-label">Token Details</div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-label">Deploy</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mobile-nav" id="mobileNav" role="navigation" aria-label="Mobile navigation">
+        <button class="mobile-nav-close" id="mobileNavClose" aria-label="Close navigation menu">
+            <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+        <nav class="mobile-nav-links">
+            <a href="https://cryptoreceh.com/"><i class="fas fa-home" aria-hidden="true"></i> Home</a>
+            <a href="https://app.cryptoreceh.com/token-sale/"><i class="fas fa-rocket" aria-hidden="true"></i> Token
+                Sale</a>
+            <a href="https://cryptoreceh.com/blog/"><i class="fa-brands fa-blogger"></i> Blog & News</a>
+        </nav>
+    </div>
+
+    <section class="hero" id="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-logo">
+                    <img src="https://cryptoreceh.com/favicon.png" alt="Token Creator Creator Logo">
+                </div>
+
+                <h1 class="animate__animated animate__fadeInUp">INSTANT CRYPTO TOKEN CREATOR</h1>
+                <p class="animate__animated animate__fadeInUp animate__delay-1s">Advanced Web3 platform for deploying
+                    custom cryptocurrency tokens on multiple blockchains. Create ERC-20 or BEP-20 tokens instantly with
+                    our intuitive no-code interface, designed for both beginners and blockchain professionals.</p>
+
+                <div class="hero-badges animate__animated animate__fadeInUp animate__delay-2s">
+                    <div class="badge">
+                        <i class="fas fa-bolt"></i>
+                        <span>No Code Required</span>
+                    </div>
+                    <div class="badge">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Secure & Audited</span>
+                    </div>
+                    <div class="badge">
+                        <i class="fas fa-rocket"></i>
+                        <span>60-Second Deployment</span>
+                    </div>
+                    <div class="badge">
+                        <i class="fas fa-coins"></i>
+                        <span>Multi-Chain Support</span>
+                    </div>
+                </div>
+
+                <div class="hero-buttons animate__animated animate__fadeInUp animate__delay-3s">
+                    <a href="#token-creator" class="hero-btn hero-btn-primary">
+                        <i class="fas fa-play" aria-hidden="true"></i> Create Now
+                    </a>
+                    <a href="#about" class="hero-btn hero-btn-secondary">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i> Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="token-creator" id="token-creator">
+        <div class="container">
+            <div class="creator-container">
+                <div class="creator-header">
+                    <h2>Create Your Cryptocurrency Token in 4 Simple Steps</h2>
+                    <p>Advanced no-code token deployment platform for your blockchain projects</p>
+                </div>
+
+                <div class="section-container">
+                    <div class="section-header">
+                        <i class="fas fa-network-wired" aria-hidden="true"></i>
+                        <span>1. Select Blockchain Network</span>
+                    </div>
+                    <select id="blockchainSelect" class="blockchain-dropdown">
+                        <option value="bnb">BNB Chain (BEP20)</option>
+                        <option value="core">Core Chain (ERC20)</option>
+                        <option value="eth" disabled>Ethereum (Maintenance)</option>
+                        <option value="ric">Riche Chain (ERC20)</option>
+                        <option value="sol" disabled>Solana (Coming Soon)</option>
+                        <option value="matic" disabled>Polygon (Suspended)</option>
+                    </select>
+
+                    <div id="currentNetworkIndicator" class="current-network-indicator" style="display: none;">
+                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                        <span id="currentNetworkText">Selected: BNB Smart Chain</span>
+                    </div>
+                </div>
+
+                <div class="section-container">
+                    <div class="section-header">
+                        <i class="fas fa-wallet" aria-hidden="true"></i>
+                        <span>2. Connect Your Web3 Wallet</span>
+                    </div>
+                    <div class="wallet-actions">
+                        <div class="connection-row">
+                            <button id="connectButton" class="btn btn-primary blinking">
+                                <i class="fas fa-plug" aria-hidden="true"></i> Connect Wallet
+                            </button>
+
+                            <button id="switchNetworkBtn" class="btn btn-error" style="display:none;">
+                                <i class="fas fa-exchange-alt" aria-hidden="true"></i> Switch Network
+                            </button>
+
+                            <div class="wallet-status-badge disconnected" id="walletStatusBadge">
+                                <div class="status-dot"></div>
+                                <span id="walletStatusText">Wallet Not Connected</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wallet-info-container" id="walletInfo">
+                        <div class="wallet-info-header">
+                            <i class="fas fa-wallet" aria-hidden="true"></i>
+                            <span>Your Wallet Information</span>
+                        </div>
+                        <div class="wallet-info-grid">
+                            <div class="wallet-info-item">
+                                <div class="wallet-info-label">
+                                    <i class="fas fa-address-card" aria-hidden="true"></i>
+                                    <span>Wallet Address:</span>
+                                </div>
+                                <div class="wallet-info-value wallet-address-value" id="walletAddressText">-</div>
+                            </div>
+                            <div class="wallet-info-item">
+                                <div class="wallet-info-label">
+                                    <i class="fas fa-coins" aria-hidden="true"></i>
+                                    <span>Your Balance:</span>
+                                </div>
+                                <div class="wallet-info-value" id="walletBalanceText">-</div>
+                            </div>
+                            <div class="wallet-info-item">
+                                <div class="wallet-info-label">
+                                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                    <span>Fee Status:</span>
+                                </div>
+                                <div class="wallet-info-value" id="balanceCheckText">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-container">
+                    <div class="section-header">
+                        <i class="fas fa-edit" aria-hidden="true"></i>
+                        <span>3. Enter Token Specifications</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="tokenName">
+                            <i class="fas fa-tag" aria-hidden="true"></i> Token Name
+                            <span class="tooltip-icon" data-tooltip="Full name of your token, e.g., Bitcoin">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                            </span>
+                        </label>
+                        <input type="text" id="tokenName" class="form-control" placeholder="e.g., Bitcoin" required
+                            aria-describedby="tokenNameError">
+                        <div id="tokenNameError" class="error-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tokenSymbol">
+                            <i class="fas fa-code" aria-hidden="true"></i> Token Symbol
+                            <span class="tooltip-icon" data-tooltip="Short token symbol (3-10 characters), e.g., BTC">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                            </span>
+                        </label>
+                        <input type="text" id="tokenSymbol" class="form-control" placeholder="e.g., BTC" required
+                            aria-describedby="tokenSymbolError">
+                        <div id="tokenSymbolError" class="error-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tokenDecimals">
+                            <i class="fas fa-divide" aria-hidden="true"></i> Decimal Places
+                            <span class="tooltip-icon"
+                                data-tooltip="Number of decimal digits (usually 18 for crypto tokens)">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                            </span>
+                        </label>
+                        <input type="number" id="tokenDecimals" class="form-control"
+                            placeholder="Decimal places (default 18)" value="18" min="0" max="18"
+                            aria-describedby="tokenDecimalsError">
+                        <div id="tokenDecimalsError" class="error-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tokenSupply">
+                            <i class="fas fa-layer-group" aria-hidden="true"></i> Total Supply
+                            <span class="tooltip-icon"
+                                data-tooltip="Total number of tokens to create (without decimals). Maximum: 1,000,000,000,000">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                            </span>
+                        </label>
+                        <input type="number" id="tokenSupply" class="form-control"
+                            placeholder="e.g., 1000000 (1 million tokens)" required min="1" max="1000000000000"
+                            aria-describedby="tokenSupplyError">
+                        <div id="tokenSupplyError" class="error-message"></div>
+                    </div>
+                </div>
+
+                <div class="section-container">
+                    <div class="section-header">
+                        <i class="fas fa-calculator" aria-hidden="true"></i>
+                        <span>4. Deployment Cost Estimate</span>
+                    </div>
+                    <div class="cost-breakdown" id="costBreakdown">
+                        <div class="cost-item">
+                            <span><i class="fa-brands fa-cc-amazon-pay" aria-hidden="true"></i> Platform Fee:</span>
+                            <span id="tokenCreationFee">Loading..</span>
+                        </div>
+                        <div class="gas-fee-row">
+                            <div class="gas-fee-label">
+                                <i class="fas fa-bolt" aria-hidden="true"></i>
+                                <span>Network Fee:</span>
+                            </div>
+                            <div class="gas-fee-value">
+                                <span id="estimatedGasFee">Loading..</span>
+                            </div>
+                        </div>
+                        <div class="gas-gwei-row">
+                            <div class="gas-gwei-label">
+                                <i class="fas fa-fire" aria-hidden="true"></i>
+                                <span>Gas Price:</span>
+                            </div>
+                            <div class="gas-gwei-value" id="gasPriceGwei">-</div>
+                        </div>
+                        <div class="cost-item">
+                            <span><i class="fa-solid fa-calculator" aria-hidden="true"></i> Total Cost:</span>
+                            <span id="totalEstimatedFee">Loading..</span>
+                        </div>
+                    </div>
+                    <button id="createButton" class="btn btn-success btn-block">
+                        <i class="fas fa-rocket" aria-hidden="true"></i> Create Token
+                    </button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="tech-spinner" aria-hidden="true"></div>
+                    <p>Processing blockchain transaction...</p>
+                </div>
+
+                <div id="status" role="status" aria-live="polite"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-web" id="about">
+        <div class="container">
+            <div class="about-web-content">
+                <h2>About Our Token Creation Platform</h2>
+
+                <div class="about-web-text">
+                    <p><strong>RECEH Token Creator</strong> is a simple and efficient platform that lets anyone generate
+                        standard cryptocurrency tokens without writing code. Built for clarity and reliability, it
+                        offers practical tools for launching tokens for blockchain projects, communities, businesses, or
+                        educational use.</p>
+                </div>
+
+                <div class="about-web-features">
+                    <div class="feature-item">
+                        <h4><i class="fas fa-cogs" style="color: var(--primary);"></i> Platform Capabilities:</h4>
+                        <ul>
+                            <li><i class="fas fa-check" style="color: var(--success);"></i> <strong>Instant Token
+                                    Creation</strong> - Deploy ERC-20/BEP-20 standard tokens within seconds</li>
+                            <li><i class="fas fa-check" style="color: var(--success);"></i> <strong>Multi-Blockchain
+                                    Support</strong> - Works with BNB Smart Chain, Core Chain, and other networks</li>
+                            <li><i class="fas fa-check" style="color: var(--success);"></i> <strong>Zero Platform
+                                    Fees</strong> - Completely free to use; only network gas fees apply</li>
+                            <li><i class="fas fa-check" style="color: var(--success);"></i> <strong>Secure Smart
+                                    Contracts</strong> - Verified and transparent contract architecture</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-item">
+                        <h4><i class="fas fa-star" style="color: var(--warning);"></i> Advantages & Benefits:</h4>
+                        <ul>
+                            <li><i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                <strong>Beginner-Friendly</strong> - Token deployment without any coding needed
+                            </li>
+                            <li><i class="fas fa-check-circle" style="color: var(--success);"></i> <strong>Project
+                                    Ready</strong> - Suitable for communities, businesses, and utility-token needs</li>
+                            <li><i class="fas fa-check-circle" style="color: var(--success);"></i> <strong>Rapid
+                                    Deployment</strong> - Create a token in less than a minute</li>
+                            <li><i class="fas fa-check-circle" style="color: var(--success);"></i> <strong>Cost
+                                    Effective</strong> - Low gas usage on BSC, Core, and similar networks</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.15);">
+                    <h3 style="color: var(--text); margin-bottom: 1rem; font-size: 1.3rem;">Need Assistance Creating
+                        Your Token?</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">
+                        If you need help during the token creation process or want support for more advanced crypto
+                        development, our team is available to guide you.
+                    </p>
+                    <button class="btn btn-primary contact-support-btn" onclick="contactSupport()">
+                        <i class="fas fa-headset" aria-hidden="true"></i> Free Consultation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="https://cryptoreceh.com/blog/tag/token-generator/"><i class="fa-solid fa-book"></i> Docs</a>
+                    <a href="https://cryptoreceh.com/faq/"><i class="fa-solid fa-file-circle-question"></i> FAQ</a>
+                    <a href="https://cryptoreceh.com/terms-of-service/"><i class="fa-solid fa-scale-balanced"></i>
+                        Terms</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>© 2025 Token Creator Platform</p>
+                <p style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--text-secondary);">Advanced Blockchain
+                    Token Creation Platform.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/security.js"></script>
+    <script src="js/blockchain.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

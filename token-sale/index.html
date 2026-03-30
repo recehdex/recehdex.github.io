@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="shortcut icon" type="image/png" href="https://cryptoreceh.com/favicon.png" />
+    <title>RECEH TOKEN SALE · Riche Chain</title>
+    <meta name="description"
+        content="Official RECEH Token Sale on Riche Chain. Purchase RECEH tokens, connect your Web3 wallet, and participate in the decentralized crypto ecosystem.">
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.16.0/dist/web3.min.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0A0A0F;
+            color: #fff;
+            min-height: 100vh;
+            padding: 0.75rem;
+            position: relative;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 10% 20%, rgba(255, 215, 0, 0.03) 0%, transparent 30%),
+                radial-gradient(circle at 90% 70%, rgba(255, 215, 0, 0.03) 0%, transparent 30%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass-card {
+            background: rgba(18, 18, 24, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 215, 0, 0.4);
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.1);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #FFD700, #FFAA00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FFD700, #FFAA00);
+            color: #0A0A0F;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 40px;
+            border: none;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1.5px solid #FFD700;
+            color: #FFD700;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 40px;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: #FFD700;
+            color: #0A0A0F;
+            box-shadow: 0 0 20px #FFD700;
+        }
+
+        .input-modern {
+            background: white;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            padding: 1rem 1.5rem;
+            color: black;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .input-modern:focus {
+            border-color: #FFD700;
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+            background: white;
+        }
+
+        /* PROGRESS BAR */
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            height: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #FFD700, #FFAA00);
+            height: 100%;
+            width: 0%;
+            border-radius: 40px;
+            position: relative;
+            transition: width 0.5s cubic-bezier(0.2, 0.9, 0.4, 1);
+            box-shadow: 0 0 20px #FFD700;
+        }
+
+        /* Stat card mobile */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            border-radius: 20px;
+            padding: 1rem 0.75rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #9CA3AF;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #FFD700;
+            line-height: 1.2;
+        }
+
+        .stat-unit {
+            font-size: 0.7rem;
+            color: #FFD700;
+            opacity: 0.7;
+        }
+
+        /* Countdown */
+        .countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+
+        .countdown-block {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 16px;
+            padding: 0.75rem 0.25rem;
+            text-align: center;
+        }
+
+        .countdown-number {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #FFD700;
+        }
+
+        .countdown-text {
+            font-size: 0.6rem;
+            color: #9CA3AF;
+            text-transform: uppercase;
+        }
+
+        /* Token info card */
+        .token-info {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 1rem;
+            border: 1px solid rgba(255, 215, 0, 0.15);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #9CA3AF;
+            font-size: 0.85rem;
+        }
+
+        .info-value {
+            color: #FFD700;
+            font-weight: 600;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        .copy-btn {
+            color: #FFD700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 0.5rem;
+        }
+
+        .copy-btn:hover {
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* live-badge */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: 40px;
+            padding: 0.25rem 1rem;
+            font-size: 0.7rem;
+            transition: all 0.3s ease;
+        }
+
+        .badge-active {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #FF4444;
+            color: #FF4444;
+        }
+
+        .badge-paused {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #FFC107;
+            color: #FFC107;
+        }
+
+        .badge-inactive {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid #FF4444;
+            color: #FF4444;
+        }
+
+        .badge-ended {
+            background: rgba(108, 117, 125, 0.1);
+            border: 1px solid #6C757D;
+            color: #6C757D;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #FF4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+            }
+        }
+
+        .modal-modern {
+            background: rgba(18, 18, 24, 0.98);
+            backdrop-filter: blur(30px);
+            border: 2px solid #FFD700;
+            border-radius: 32px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+        }
+
+        .purchase-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 0.5rem;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .main-container {
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .error-message {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid #FF4444;
+            border-radius: 16px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            color: #FF8888;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .warning-message {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #FFC107;
+            border-radius: 16px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            color: #FFD700;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="globalError" class="error-message main-container" style="display: none;">
+        <i class="fa-solid fa-circle-exclamation mr-2"></i>
+        <span id="errorText"></span>
+    </div>
+
+    <div id="warningMessage" class="warning-message main-container" style="display: none;">
+        <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+        <span id="warningText"></span>
+    </div>
+
+    <div id="txModal" class="fixed inset-0 flex items-center justify-center z-50 hidden px-4"
+        style="background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);">
+        <div class="modal-modern">
+            <button onclick="closeTxModal()"
+                class="absolute top-4 right-4 text-gray-400 hover:text-[#FFD700] text-2xl transition">
+                <i class="fa-solid fa-times"></i>
+            </button>
+            <div id="txModalIcon" class="text-5xl mb-4 flex justify-center"></div>
+            <h3 id="txModalTitle" class="text-2xl font-bold gold-gradient text-center"></h3>
+            <p id="txModalMessage" class="text-gray-300 mt-3 text-sm text-center"></p>
+            <div id="txModalActions" class="mt-6 flex flex-col items-center gap-2 hidden"></div>
+        </div>
+    </div>
+
+    <div id="notifModal" class="fixed inset-0 flex items-center justify-center z-40 hidden px-4"
+        style="background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);">
+        <div class="modal-modern">
+            <div class="flex justify-between items-start mb-4">
+                <div id="notifIcon" class="text-4xl"></div>
+                <button onclick="closeNotif()" class="text-gray-400 hover:text-[#FFD700] text-2xl">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <h3 id="notifTitle" class="text-xl font-bold gold-gradient"></h3>
+            <p id="notifMessage" class="text-gray-300 mt-2 text-sm"></p>
+            <div id="notifActions" class="mt-4 flex flex-wrap justify-center gap-2"></div>
+        </div>
+    </div>
+
+    <div class="main-container space-y-4">
+
+        <div class="glass-card p-5">
+            <div class="flex items-center gap-3">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFAA00] p-1">
+                    <img src="https://raw.githubusercontent.com/cryptorecehcom/images/refs/heads/main/receh-250x250.png"
+                        alt="RECEH" class="w-full h-full rounded-full object-cover border-2 border-[#FFD700]">
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black gold-gradient">$RECEH SALE</h1>
+                    <div id="saleStatusBadge" class="badge-status">
+                        <span class="dot"></span>
+                        <span id="saleStatusText">PHASE 1 LIVE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-wallet text-[#FFD700] text-xl"></i>
+                    <span class="font-semibold">Wallet</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="walletStatusDesc" class="text-xs text-gray-400"></span>
+                    <button id="walletActionBtn" class="btn-primary text-sm py-2 px-4">
+                        <i class="fa-solid fa-plug"></i> CONNECT
+                    </button>
+                </div>
+            </div>
+
+            <div id="walletDetail" class="hidden mt-4 pt-4 border-t border-[#FFD700]/20">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-400 text-sm">You Address</span>
+                    <div class="flex items-center gap-2">
+                        <span id="walletShort" class="font-mono text-sm text-[#FFD700]"></span>
+                        <i class="fa-regular fa-copy copy-btn text-sm" onclick="copyAddress()"></i>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">RIC</div>
+                        <div class="stat-value"><span id="ricBalance">0.00</span></div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">RECEH</div>
+                        <div class="stat-value"><span id="tokenBalance">0.00</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-5">
+
+            <div class="stats-grid mb-4">
+                <div class="stat-item">
+                    <div class="stat-label">TOKEN RATE</div>
+                    <div class="stat-value"><span id="rateValue">-</span></div>
+                    <div class="stat-unit">RECEH/RIC</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">TOTAL SOLD</div>
+                    <div class="stat-value"><span id="tokensSold">-</span></div>
+                    <div class="stat-unit">RECEH</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">TOTAL RAISED</div>
+                    <div class="stat-value"><span id="weiRaised">-</span></div>
+                    <div class="stat-unit">RIC</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">REMAINING</div>
+                    <div class="stat-value"><span id="tokenRemaining">-</span></div>
+                    <div class="stat-unit">RECEH</div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-400">Sale Progress</span>
+                    <span class="text-[#FFD700] font-bold"><span id="progressPercent">0</span>%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill" style="width: 0%;"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span id="soldAmountLabel">0 RECEH</span>
+                    <span id="totalSupplyLabel">1,000 RECEH for Sale!</span>
+                </div>
+            </div>
+
+            <div class="countdown-grid">
+                <div class="countdown-block">
+                    <div class="countdown-number" id="days">00</div>
+                    <div class="countdown-text">Days</div>
+                </div>
+                <div class="countdown-block">
+                    <div class="countdown-number" id="hours">00</div>
+                    <div class="countdown-text">Hours</div>
+                </div>
+                <div class="countdown-block">
+                    <div class="countdown-number" id="minutes">00</div>
+                    <div class="countdown-text">Mins</div>
+                </div>
+                <div class="countdown-block">
+                    <div class="countdown-number" id="seconds">00</div>
+                    <div class="countdown-text">Secs</div>
+                </div>
+            </div>
+            <div class="text-xs text-center text-gray-500 mt-2" id="endDateDisplay"></div>
+        </div>
+
+        <div class="glass-card p-5">
+            <h2 class="text-lg font-bold gold-gradient mb-4">BUY TOKEN</h2>
+
+            <div class="token-info mb-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Your max</span>
+                    <span class="text-[#FFD700] font-bold"><span id="userMaxPurchase">0.00</span> RIC</span>
+                </div>
+                <div class="flex justify-between items-center text-sm mt-1">
+                    <span class="text-gray-400">Minimum</span>
+                    <span class="text-[#FFD700]"><span id="minPurchaseDisplay">0.1</span> RIC</span>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <input type="number" id="ricInput" step="0.01" placeholder="Enter amount in RIC" class="input-modern">
+            </div>
+
+            <div class="flex justify-between items-center bg-black/30 p-4 rounded-xl mb-4 border border-[#FFD700]/20">
+                <span class="text-gray-400">You receive</span>
+                <span class="text-xl font-bold gold-gradient"><span id="estimatedTokens">0</span> RECEH</span>
+            </div>
+
+            <button id="buyBtn" class="btn-primary w-full py-4 text-base">
+                <i class="fa-solid fa-bolt"></i> BUY NOW
+            </button>
+
+            <p class="text-xs text-center text-gray-500 mt-2">
+                <br />
+                <i class="fa-brands fa-amazon-pay"></i> If you want to buy RECEH using BNB, please <a
+                    href="https://cryptoreceh.com/token-sale/"><b>
+                        <font color="blue">click here</font>
+                    </b></a>.
+            </p>
+        </div>
+
+        <div class="glass-card p-5">
+            <h3 class="text-lg font-bold gold-gradient mb-3">TOKEN INFO</h3>
+
+            <div class="token-info">
+                <div class="info-row">
+                    <span class="info-label">Name</span>
+                    <span class="info-value">RECEH Token</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Symbol</span>
+                    <span class="info-value">RECEH</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Decimals</span>
+                    <span class="info-value">18</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Total Supply</span>
+                    <span class="info-value">100,000,000</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">PreSale Price</span>
+                    <span class="info-value">$0,008</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Listing Price</span>
+                    <span class="info-value">$0,01</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Contract</span>
+                    <div class="flex items-center">
+                        <span class="info-value">0x4c9C...1C5</span>
+                        <i class="fa-regular fa-copy copy-btn ml-2"
+                            onclick="copyToClipboard('0x4c9C431Fa7fD104c0E7230d20E1623E62019A1C5')"></i>
+                    </div>
+                </div>
+            </div>
+
+            <button id="addTokenBtn" class="btn-secondary w-full mt-4 py-3 text-sm">
+                <i class="fa-solid fa-plus-circle"></i> ADD RECEH TO WALLET
+            </button>
+        </div>
+
+        <div class="glass-card p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-chart-simple text-[#FFD700]"></i>
+                <h3 class="font-semibold gold-gradient">YOUR PURCHASE</h3>
+            </div>
+            <div class="flex justify-between items-center p-4 bg-black/30 rounded-xl border border-[#FFD700]/20">
+                <span class="text-gray-400">Total RECEH bought</span>
+                <span class="text-xl font-bold text-[#FFD700]"><span id="userPurchasedTokens">0</span> RECEH</span>
+            </div>
+        </div>
+
+        <div class="glass-card p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-clock-rotate-left text-[#FFD700]"></i>
+                <h3 class="font-semibold gold-gradient">RECENT PURCHASES</h3>
+            </div>
+            <div id="purchaseListContainer" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                <div class="text-center text-gray-400 py-4">Loading purchases...</div>
+            </div>
+        </div>
+
+        <div class="glass-card p-5">
+            <h3 class="text-lg font-bold gold-gradient mb-3">SALE INFORMATION</h3>
+            <div class="space-y-3 text-sm text-gray-300">
+                <p>If you want to buy RECEH using BNB, please <a href="https://cryptoreceh.com/token-sale/"><b>
+                            <font color="blue">click here</font>
+                        </b></a>.</p>
+                <p>The allocation of funds from the RECEH token sale is designed to support liquidity, market stability,
+                    and long-term project development.
+                    <br /><br />
+                    60% of the RIC collected from the token sale will be allocated to the RECEH liquidity pool on
+                    decentralized exchanges (DEX) to ensure sufficient trading liquidity.
+                    <br /><br />
+                    30% will be reserved for a price stabilization fund aimed at maintaining RECEH within a sustainable
+                    market range. This fund may be used for strategic market actions, including token buyback when
+                    necessary.
+                    <br /><br />
+                    The remaining 10% will be allocated for operational costs and the ongoing development of the RECEH
+                    ecosystem.
+                </p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <a href="https://recehdex.github.io/staking/" target="_blank" class="btn-primary py-3 text-sm text-center">
+                <i class="fa-solid fa-layer-group"></i> STAKING
+            </a>
+            <a href="https://bridge.receh.workers.dev/" target="_blank" class="btn-secondary py-3 text-sm text-center">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> BRIDGE
+            </a>
+        </div>
+
+        <div class="glass-card p-4">
+            <div class="flex justify-center gap-6">
+                <a href="https://twitter.com/cryptorecehcom" target="_blank"
+                    class="text-[#FFD700] hover:text-white text-xl">
+                    <i class="fa-brands fa-twitter"></i>
+                </a>
+                <a href="https://t.me/cryptorecehcom" target="_blank" class="text-[#FFD700] hover:text-white text-xl">
+                    <i class="fa-brands fa-telegram"></i>
+                </a>
+                <a href="https://cryptoreceh.com/token/" target="_blank"
+                    class="text-[#FFD700] hover:text-white text-xl">
+                    <i class="fa-solid fa-globe"></i>
+                </a>
+            </div>
+            <p class="text-center text-gray-600 text-xs mt-3">© 2026 CryptoRECEH.com</p>
+        </div>
+    </div>
+
+    <script>
+
+        const CONFIG = {
+            SALE_ADDRESS: "0x1b58BaB982Bd2F705033ef2b5b9484BcaeeD85D1",
+            TOKEN_ADDRESS: "0x4c9C431Fa7fD104c0E7230d20E1623E62019A1C5",
+            CHAIN_ID: "0x203BA",
+            CHAIN_NAME: "Riche Chain",
+            TOTAL_SUPPLY: 100_000_000,
+            PRESALE_ALLOCATION: 1_000,
+            RPC: "https://seed-richechain.com/",
+            TOKEN_SYMBOL: "RECEH",
+            TOKEN_DECIMALS: 18,
+            TOKEN_LOGO_URL: "https://raw.githubusercontent.com/cryptorecehcom/images/refs/heads/main/tokenlogo/RECEH.png",
+            NATIVE_SYMBOL: "RIC",
+            EXPLORER: "https://richescan.com"
+        };
+
+        const SALE_ABI = [{ "inputs": [{ "internalType": "uint256", "name": "_rate", "type": "uint256" }, { "internalType": "address", "name": "_token", "type": "address" }, { "internalType": "uint256", "name": "_maxPurchase", "type": "uint256" }, { "internalType": "address", "name": "_initialOwner", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" }, { "inputs": [], "name": "AmountExceedsUnsold", "type": "error" }, { "inputs": [], "name": "BelowMinPurchase", "type": "error" }, { "inputs": [], "name": "EnforcedPause", "type": "error" }, { "inputs": [], "name": "ExpectedPause", "type": "error" }, { "inputs": [], "name": "InsufficientTokens", "type": "error" }, { "inputs": [], "name": "InvalidDuration", "type": "error" }, { "inputs": [], "name": "MaxPurchaseReached", "type": "error" }, { "inputs": [], "name": "NoFundsToWithdraw", "type": "error" }, { "inputs": [], "name": "NotWhitelisted", "type": "error" }, { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }], "name": "OwnableInvalidOwner", "type": "error" }, { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "OwnableUnauthorizedAccount", "type": "error" }, { "inputs": [], "name": "ReentrancyGuardReentrantCall", "type": "error" }, { "inputs": [], "name": "SaleEnded", "type": "error" }, { "inputs": [], "name": "SaleNotActive", "type": "error" }, { "inputs": [], "name": "SaleNotStarted", "type": "error" }, { "inputs": [], "name": "TransferFailed", "type": "error" }, { "inputs": [], "name": "ZeroAddress", "type": "error" }, { "inputs": [], "name": "ZeroAmount", "type": "error" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "FundsWithdrawn", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "newMaxPurchase", "type": "uint256" }], "name": "MaxPurchaseUpdated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "newMinPurchase", "type": "uint256" }], "name": "MinPurchaseUpdated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "account", "type": "address" }], "name": "Paused", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "newRate", "type": "uint256" }], "name": "RateUpdated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "startTime", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "endTime", "type": "uint256" }], "name": "SaleStarted", "type": "event" }, { "anonymous": false, "inputs": [], "name": "SaleStopped", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "token", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "TokensWithdrawn", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "purchaser", "type": "address" }, { "indexed": true, "internalType": "address", "name": "beneficiary", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "TokensPurchased", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "address", "name": "account", "type": "address" }], "name": "Unpaused", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "user", "type": "address" }, { "indexed": false, "internalType": "bool", "name": "status", "type": "bool" }], "name": "WhitelistUpdated", "type": "event" }, { "stateMutability": "payable", "type": "fallback" }, { "stateMutability": "payable", "type": "receive" }, { "inputs": [{ "internalType": "address", "name": "beneficiary", "type": "address" }], "name": "buyTokens", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "tokenAddress", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "emergencyWithdrawToken", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "additionalTime", "type": "uint256" }], "name": "extendSale", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "buyer", "type": "address" }], "name": "getMaxPurchase", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "buyer", "type": "address" }], "name": "getPurchasedAmount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getSaleStatus", "outputs": [{ "internalType": "bool", "name": "isActive", "type": "bool" }, { "internalType": "bool", "name": "hasStarted", "type": "bool" }, { "internalType": "bool", "name": "hasEnded", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getTimeRemaining", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "weiAmount", "type": "uint256" }], "name": "getTokenAmount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getTokenBalance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getTotalTokensSold", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "user", "type": "address" }], "name": "isWhitelisted", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "pause", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "paused", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "purchasedAmounts", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "rate", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "saleActive", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "saleEndTime", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "saleStartTime", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "newMaxPurchase", "type": "uint256" }], "name": "setMaxPurchase", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "newMinPurchase", "type": "uint256" }], "name": "setMinPurchase", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "newRate", "type": "uint256" }], "name": "setRate", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "bool", "name": "enabled", "type": "bool" }], "name": "setWhitelistEnabled", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "duration", "type": "uint256" }], "name": "startSale", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "stopSale", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "token", "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "unpause", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "addresses", "type": "address[]" }, { "internalType": "bool", "name": "status", "type": "bool" }], "name": "updateWhitelist", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "weiMaxPurchase", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "weiMinPurchase", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "weiRaised", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "whitelistEnabled", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "withdrawFunds", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "withdrawUnsoldTokens", "outputs": [], "stateMutability": "nonpayable", "type": "function" }];
+        const TOKEN_ABI = [{ "constant": true, "inputs": [{ "name": "_owner", "type": "address" }], "name": "balanceOf", "outputs": [{ "name": "balance", "type": "uint256" }], "type": "function" }];
+
+        let web3Read = null;
+        let web3Write = null;
+        let saleContractRead = null;
+        let tokenContractRead = null;
+        let saleContractWrite = null;
+        let userAccount = null;
+        let isNetworkCorrect = false;
+        let provider = null;
+
+        let rate = 0;
+        let weiRaised = 0;
+        let tokenRemaining = 0;
+        let saleActive = false;
+        let salePaused = false;
+        let saleEndTime = 0;
+        let minPurchaseWei = 0n;
+        let minPurchaseRIC = 0.1;
+        let userMaxPurchaseWei = 0n;
+        let userPurchasedWei = 0n;
+
+        let timerInterval;
+        let countdownInterval;
+        let purchaseEvents = [];
+
+        function isValidEthAddress(addr) {
+            return /^0x[a-fA-F0-9]{40}$/.test(addr);
+        }
+
+        function detectProvider() {
+            return window.ethereum || (window.web3 && window.web3.currentProvider) || null;
+        }
+
+        function shortenAddress(addr) {
+            return addr ? addr.slice(0, 6) + '...' + addr.slice(-4) : '';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('globalError');
+            document.getElementById('errorText').innerText = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+        }
+
+        function showWarning(message) {
+            const warningDiv = document.getElementById('warningMessage');
+            document.getElementById('warningText').innerText = message;
+            warningDiv.style.display = 'block';
+        }
+
+        function hideWarning() {
+            document.getElementById('warningMessage').style.display = 'none';
+        }
+
+        function showTxModal(state, title, message, txHash = null, actions = []) {
+            const modal = document.getElementById('txModal');
+            document.getElementById('txModalIcon').innerHTML = state === 'loading' ? '<i class="fa-solid fa-circle-notch fa-spin text-[#FFD700] text-5xl"></i>' : (state === 'success' ? '<i class="fa-solid fa-circle-check text-[#FFD700] text-5xl"></i>' : '<i class="fa-solid fa-circle-exclamation text-[#FFD700] text-5xl"></i>');
+            document.getElementById('txModalTitle').innerText = title;
+            document.getElementById('txModalMessage').innerText = message;
+
+            const actionsContainer = document.getElementById('txModalActions');
+            actionsContainer.innerHTML = '';
+
+            if (actions.length) {
+                actions.forEach(a => {
+                    const btn = document.createElement('button');
+                    btn.className = a.className || 'btn-secondary text-sm py-2 px-4';
+                    btn.innerHTML = a.icon ? `<i class="${a.icon}"></i> ${a.text}` : a.text;
+                    btn.onclick = a.handler;
+                    actionsContainer.appendChild(btn);
+                });
+                actionsContainer.classList.remove('hidden');
+            } else {
+                actionsContainer.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeTxModal() {
+            document.getElementById('txModal').classList.add('hidden');
+        }
+
+        function showNotif(title, message, type = 'info', actions = []) {
+            const modal = document.getElementById('notifModal');
+            document.getElementById('notifTitle').innerText = title;
+            document.getElementById('notifMessage').innerText = message;
+
+            const icon = document.getElementById('notifIcon');
+            if (type === 'success') icon.innerHTML = '<i class="fa-solid fa-circle-check text-[#FFD700] text-5xl"></i>';
+            else if (type === 'error') icon.innerHTML = '<i class="fa-solid fa-circle-exclamation text-[#FFD700] text-5xl"></i>';
+            else icon.innerHTML = '<i class="fa-solid fa-circle-info text-[#FFD700] text-5xl"></i>';
+
+            const actionsDiv = document.getElementById('notifActions');
+            actionsDiv.innerHTML = '';
+
+            actions.forEach(a => {
+                const btn = document.createElement('button');
+                btn.className = a.className || 'btn-secondary text-sm py-2 px-4';
+                btn.innerHTML = a.icon ? `<i class="${a.icon}"></i> ${a.text}` : a.text;
+                btn.onclick = a.handler;
+                actionsDiv.appendChild(btn);
+            });
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeNotif() {
+            document.getElementById('notifModal').classList.add('hidden');
+        }
+
+        function updateWalletButton() {
+            const btn = document.getElementById('walletActionBtn');
+            const statusDesc = document.getElementById('walletStatusDesc');
+
+            if (!userAccount) {
+                btn.innerHTML = '<i class="fa-solid fa-plug"></i> CONNECT';
+                btn.className = 'btn-primary text-sm py-2 px-4';
+                btn.onclick = () => connectWallet(false);
+                document.getElementById('walletDetail').classList.add('hidden');
+                hideWarning();
+            } else if (!isNetworkCorrect) {
+                btn.innerHTML = '<i class="fa-solid fa-arrows-spin"></i> SWITCH TO BSC';
+                btn.className = 'btn-secondary text-sm py-2 px-4';
+                btn.onclick = switchToRicheChain;
+                document.getElementById('walletDetail').classList.remove('hidden');
+                document.getElementById('walletShort').innerText = shortenAddress(userAccount);
+                showWarning('Please switch to Riche Chain network');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> DISCONNECT';
+                btn.className = 'btn-secondary text-sm py-2 px-4';
+                btn.onclick = disconnectWallet;
+                document.getElementById('walletDetail').classList.remove('hidden');
+                document.getElementById('walletShort').innerText = shortenAddress(userAccount);
+                hideWarning();
+            }
+        }
+
+        function disconnectWallet() {
+            userAccount = null;
+            isNetworkCorrect = false;
+            updateWalletButton();
+            loadPublicData();
+        }
+
+        async function initReadContract() {
+            try {
+                web3Read = new Web3(CONFIG.RPC);
+                saleContractRead = new web3Read.eth.Contract(SALE_ABI, CONFIG.SALE_ADDRESS);
+                tokenContractRead = new web3Read.eth.Contract(TOKEN_ABI, CONFIG.TOKEN_ADDRESS);
+
+                await saleContractRead.methods.rate().call();
+                console.log('✅ Read contract OK');
+                return true;
+            } catch (e) {
+                console.error('❌ Read contract error:', e);
+                showError('Cannot connect to Riche Chain. Please check your connection.');
+                return false;
+            }
+        }
+
+        async function loadPublicData() {
+            if (!saleContractRead) return;
+
+            try {
+                const rateWei = await saleContractRead.methods.rate().call();
+                rate = parseFloat(web3Read.utils.fromWei(rateWei, 'ether'));
+                document.getElementById('rateValue').innerText = formatNumber(rate);
+
+                const weiRaisedWei = await saleContractRead.methods.weiRaised().call();
+                weiRaised = parseFloat(web3Read.utils.fromWei(weiRaisedWei, 'ether'));
+                document.getElementById('weiRaised').innerText = weiRaised.toFixed(2);
+
+                const soldTokens = weiRaised * rate;
+                document.getElementById('tokensSold').innerText = Math.round(soldTokens).toLocaleString();
+
+                document.getElementById('soldAmountLabel').innerHTML = `${Math.round(soldTokens).toLocaleString()} RECEH`;
+
+                const tokenBalanceWei = await tokenContractRead.methods.balanceOf(CONFIG.SALE_ADDRESS).call();
+                tokenRemaining = parseFloat(web3Read.utils.fromWei(tokenBalanceWei, 'ether'));
+                document.getElementById('tokenRemaining').innerText = Math.round(tokenRemaining).toLocaleString();
+
+                const percent = (soldTokens / CONFIG.PRESALE_ALLOCATION) * 100;
+                document.getElementById('progressFill').style.width = Math.min(percent, 100) + '%';
+                document.getElementById('progressPercent').innerText = percent.toFixed(1);
+
+                document.getElementById('totalSupplyLabel').innerHTML =
+                    `${CONFIG.PRESALE_ALLOCATION.toLocaleString()} RECEH for Sale!`;
+
+                saleActive = await saleContractRead.methods.saleActive().call();
+                salePaused = await saleContractRead.methods.paused().call();
+                saleEndTime = parseInt(await saleContractRead.methods.saleEndTime().call());
+
+                updateSaleStatusBadge();
+
+                minPurchaseWei = await saleContractRead.methods.weiMinPurchase().call();
+                minPurchaseRIC = parseFloat(web3Read.utils.fromWei(minPurchaseWei, 'ether'));
+                document.getElementById('minPurchaseDisplay').innerText = minPurchaseRIC.toFixed(2);
+                document.getElementById('ricInput').setAttribute('min', minPurchaseRIC);
+                document.getElementById('ricInput').placeholder = `Min ${minPurchaseRIC.toFixed(2)} RIC`;
+
+                updateEndDate();
+
+            } catch (e) {
+                console.error('loadPublicData error:', e);
+                showError('Error loading sale data. Please refresh.');
+            }
+        }
+
+        function updateEndDate() {
+            if (saleEndTime > 0) {
+                const date = new Date(saleEndTime * 1000);
+                document.getElementById('endDateDisplay').innerText = 'Ends: ' + date.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+
+        function updateSaleStatusBadge() {
+            const badge = document.getElementById('saleStatusBadge');
+            const statusText = document.getElementById('saleStatusText');
+
+            badge.className = 'badge-status';
+
+            if (salePaused) {
+                badge.classList.add('badge-paused');
+                statusText.innerText = 'SALE PAUSED';
+            } else if (!saleActive) {
+                badge.classList.add('badge-inactive');
+                statusText.innerText = 'SALE INACTIVE';
+            } else if (saleEndTime < Math.floor(Date.now() / 1000)) {
+                badge.classList.add('badge-ended');
+                statusText.innerText = 'SALE ENDED';
+            } else {
+                badge.classList.add('badge-active');
+                statusText.innerText = 'PHASE 1 LIVE';
+            }
+        }
+
+        function updateCountdown() {
+            if (!saleEndTime) return;
+
+            const now = Math.floor(Date.now() / 1000);
+            const diff = saleEndTime - now;
+
+            if (diff <= 0) {
+                document.getElementById('days').innerText = '00';
+                document.getElementById('hours').innerText = '00';
+                document.getElementById('minutes').innerText = '00';
+                document.getElementById('seconds').innerText = '00';
+                return;
+            }
+
+            const days = Math.floor(diff / 86400);
+            const hours = Math.floor((diff % 86400) / 3600);
+            const minutes = Math.floor((diff % 3600) / 60);
+            const seconds = diff % 60;
+
+            document.getElementById('days').innerText = days.toString().padStart(2, '0');
+            document.getElementById('hours').innerText = hours.toString().padStart(2, '0');
+            document.getElementById('minutes').innerText = minutes.toString().padStart(2, '0');
+            document.getElementById('seconds').innerText = seconds.toString().padStart(2, '0');
+        }
+
+        async function connectWallet(silent = false) {
+            if (!provider) {
+                showWalletNotFoundModal();
+                return;
+            }
+
+            if (!saleContractRead) {
+                showNotif('Error', 'Contract not ready. Refresh page.', 'error');
+                return;
+            }
+
+            try {
+                const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                if (!accounts?.length) throw new Error('No accounts');
+
+                userAccount = accounts[0];
+                web3Write = new Web3(provider);
+                saleContractWrite = new web3Write.eth.Contract(SALE_ABI, CONFIG.SALE_ADDRESS);
+
+                await checkNetwork();
+
+                if (isNetworkCorrect) {
+                    await loadUserData();
+                }
+
+                updateWalletButton();
+
+                if (!silent) {
+                    showNotif(
+                        isNetworkCorrect ? 'Connected' : 'Wrong Network',
+                        isNetworkCorrect ? `Wallet connected to ${CONFIG.CHAIN_NAME}!` : `Please switch to ${CONFIG.CHAIN_NAME}.`,
+                        isNetworkCorrect ? 'success' : 'warning'
+                    );
+                }
+            } catch (error) {
+                console.error('Connect error:', error);
+                if (!silent) showNotif('Connection Failed', error.message || 'User rejected', 'error');
+            }
+        }
+
+        async function checkNetwork() {
+            if (!provider) return false;
+            try {
+                const chainId = await provider.request({ method: 'eth_chainId' });
+                isNetworkCorrect = chainId.toLowerCase() === CONFIG.CHAIN_ID.toLowerCase();
+                return isNetworkCorrect;
+            } catch (e) {
+                isNetworkCorrect = false;
+                return false;
+            }
+        }
+
+        async function switchToRicheChain() {
+            if (!provider) {
+                showNotif('Wallet Not Found', 'No wallet detected.', 'error');
+                return;
+            }
+
+            try {
+                await provider.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: CONFIG.CHAIN_ID }]
+                });
+
+                setTimeout(async () => {
+                    await checkNetwork();
+                    if (isNetworkCorrect) {
+                        await loadUserData();
+                        updateWalletButton();
+                        showNotif('Network Switched', `Now on ${CONFIG.CHAIN_NAME}.`, 'success');
+                    }
+                }, 1000);
+            } catch (e) {
+                if (e.code === 4902) {
+                    try {
+                        await provider.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: CONFIG.CHAIN_ID,
+                                chainName: CONFIG.CHAIN_NAME,
+                                rpcUrls: [CONFIG.RPC],
+                                nativeCurrency: {
+                                    name: CONFIG.NATIVE_SYMBOL,
+                                    symbol: CONFIG.NATIVE_SYMBOL,
+                                    decimals: 18
+                                },
+                                blockExplorerUrls: [CONFIG.EXPLORER]
+                            }]
+                        });
+                        showNotif('Chain Added', 'Please switch to Riche Chain manually.', 'success');
+                    } catch (addErr) {
+                        showNotif('Error', 'Could not add Riche Chain.', 'error');
+                    }
+                } else {
+                    showNotif('Switch Error', e.message || 'User rejected', 'error');
+                }
+            }
+        }
+
+        async function loadUserData() {
+            if (!userAccount || !isValidEthAddress(userAccount)) return;
+
+            if (web3Write) {
+                try {
+                    const ricWei = await web3Write.eth.getBalance(userAccount);
+                    document.getElementById('ricBalance').innerText = parseFloat(web3Write.utils.fromWei(ricWei, 'ether')).toFixed(4);
+                } catch (e) {
+                    console.warn('Failed to load RIC balance');
+                }
+            }
+
+            if (tokenContractRead) {
+                try {
+                    const tokenWei = await tokenContractRead.methods.balanceOf(userAccount).call();
+                    document.getElementById('tokenBalance').innerText = parseFloat(web3Read.utils.fromWei(tokenWei, 'ether')).toFixed(2);
+                } catch (e) {
+                    console.warn('Failed to load RECEH balance');
+                }
+            }
+
+            try {
+                userMaxPurchaseWei = await (saleContractWrite?.methods.getMaxPurchase(userAccount).call() || saleContractRead?.methods.getMaxPurchase(userAccount).call());
+                document.getElementById('userMaxPurchase').innerText = parseFloat(web3Read.utils.fromWei(userMaxPurchaseWei, 'ether')).toFixed(2);
+            } catch (e) {
+                document.getElementById('userMaxPurchase').innerText = '0.00';
+            }
+
+            try {
+                userPurchasedWei = await (saleContractWrite?.methods.purchasedAmounts(userAccount).call() || saleContractRead?.methods.purchasedAmounts(userAccount).call());
+                const purchasedRic = web3Read.utils.fromWei(userPurchasedWei, 'ether');
+                document.getElementById('userPurchasedTokens').innerText = Math.round(purchasedRic * rate).toLocaleString();
+            } catch (e) {
+                document.getElementById('userPurchasedTokens').innerText = '0';
+            }
+        }
+
+        function estimateTokens() {
+            const amt = parseFloat(document.getElementById('ricInput').value) || 0;
+            document.getElementById('estimatedTokens').innerText = Math.round(amt * rate).toLocaleString();
+        }
+
+        function setBuyButtonLoading(loading) {
+            const btn = document.getElementById('buyBtn');
+            btn.disabled = loading;
+            btn.innerHTML = loading ? '<i class="fa-solid fa-circle-notch fa-spin"></i> PROCESSING...' : '<i class="fa-solid fa-bolt"></i> BUY NOW';
+        }
+
+        async function buyTokens(e) {
+            e.preventDefault();
+
+            if (!userAccount) {
+                showNotif('Wallet Not Connected', 'Please connect your wallet first.', 'error');
+                return;
+            }
+
+            if (!isNetworkCorrect) {
+                showNotif('Wrong Network', 'Switch to Riche Chain.', 'error');
+                return;
+            }
+
+            if (!saleContractWrite) {
+                showNotif('Error', 'Wallet not ready.', 'error');
+                return;
+            }
+
+            if (salePaused) {
+                showNotif('Sale Paused', 'The sale is paused by admin.', 'error');
+                return;
+            }
+
+            if (!saleActive) {
+                showNotif('Sale Inactive', 'Sale is not active.', 'error');
+                return;
+            }
+
+            const amount = parseFloat(document.getElementById('ricInput').value);
+            if (isNaN(amount) || amount < minPurchaseRIC) {
+                showNotif('Amount Too Low', `Minimum purchase is ${minPurchaseRIC.toFixed(2)} RIC`, 'error');
+                return;
+            }
+
+            try {
+                const maxPurchaseWei = await saleContractWrite.methods.getMaxPurchase(userAccount).call();
+                const maxRic = parseFloat(web3Write.utils.fromWei(maxPurchaseWei, 'ether'));
+                if (amount > maxRic) {
+                    showNotif('Exceeds Limit', `You can only buy up to ${maxRic.toFixed(2)} RIC more.`, 'error');
+                    return;
+                }
+            } catch (e) {
+                console.error('Check max purchase error:', e);
+                showNotif('Error', 'Could not verify purchase limit.', 'error');
+                return;
+            }
+
+            const amountWei = web3Write.utils.toWei(amount.toString(), 'ether');
+
+            showTxModal('loading', 'Transaction in Progress', 'Please wait...');
+            setBuyButtonLoading(true);
+
+            const promiEvent = saleContractWrite.methods.buyTokens(userAccount).send({
+                from: userAccount,
+                value: amountWei,
+                gas: 300000
+            });
+
+            let receiptReceived = false;
+
+            promiEvent.on('transactionHash', function (hash) {
+                showTxModal('loading', 'Transaction Sent', `Hash: ${hash.slice(0, 10)}...${hash.slice(-8)}`, null, [
+                    { text: 'View on Explorer', icon: 'fa-solid fa-up-right-from-square', className: 'btn-secondary text-sm py-2 px-4', handler: () => window.open(`${CONFIG.EXPLORER}/tx/${hash}`, '_blank') }
+                ]);
+            });
+
+            promiEvent.on('receipt', function (receipt) {
+                if (receiptReceived) return;
+                receiptReceived = true;
+
+                const explorerUrl = `${CONFIG.EXPLORER}/tx/${receipt.transactionHash}`;
+                const tokenAmount = (amount * rate).toFixed(2);
+
+                showTxModal('success', 'Purchase Successful!', `You bought ${tokenAmount} RECEH.`, null, [
+                    { text: 'View on Explorer', icon: 'fa-solid fa-up-right-from-square', className: 'btn-secondary text-sm py-2 px-4', handler: () => window.open(explorerUrl, '_blank') },
+                    { text: 'Add RECEH', icon: 'fa-solid fa-plus-circle', className: 'btn-primary text-sm py-2 px-4', handler: addTokenToWallet }
+                ]);
+
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#FFD700', '#FFAA00']
+                });
+
+                document.getElementById('ricInput').value = '';
+                estimateTokens();
+                loadPublicData();
+                loadUserData();
+                loadPurchaseHistory();
+                setBuyButtonLoading(false);
+            });
+
+            promiEvent.on('error', function (err) {
+                if (receiptReceived) return;
+                console.error('Buy error:', err);
+                setBuyButtonLoading(false);
+
+                let userMsg = err.message || 'Transaction failed';
+                if (userMsg.includes('BelowMinPurchase')) userMsg = `Minimum is ${minPurchaseRIC.toFixed(2)} RIC`;
+                else if (userMsg.includes('MaxPurchaseReached')) userMsg = 'Max purchase limit reached';
+                else if (userMsg.includes('SaleNotActive')) userMsg = 'Sale is not active';
+                else if (userMsg.includes('SaleEnded')) userMsg = 'Sale has ended';
+                else if (userMsg.includes('InsufficientTokens')) userMsg = 'Not enough RECEH left';
+                else if (userMsg.includes('paused')) userMsg = 'Sale is paused';
+                else if (userMsg.includes('User denied')) userMsg = 'Transaction rejected';
+
+                showTxModal('error', 'Transaction Failed', userMsg, null, []);
+            });
+        }
+
+        async function addTokenToWallet() {
+            if (!provider) {
+                showNotif('No Wallet', 'Please connect wallet first.', 'error');
+                return;
+            }
+
+            try {
+                await provider.request({
+                    method: 'wallet_watchAsset',
+                    params: {
+                        type: 'ERC20',
+                        options: {
+                            address: CONFIG.TOKEN_ADDRESS,
+                            symbol: CONFIG.TOKEN_SYMBOL,
+                            decimals: CONFIG.TOKEN_DECIMALS,
+                            image: CONFIG.TOKEN_LOGO_URL
+                        }
+                    }
+                });
+                showNotif('Success', 'RECEH added to wallet!', 'success');
+            } catch (e) {
+                showNotif('Failed', 'Could not add token to wallet.', 'error');
+            }
+        }
+
+        function copyAddress() {
+            if (userAccount) {
+                navigator.clipboard.writeText(userAccount);
+                showNotif('Copied', 'Wallet address copied.', 'info');
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            showNotif('Copied!', 'Address copied to clipboard', 'success');
+        }
+
+        function handleAccountsChanged(accounts) {
+            if (!accounts.length) {
+                userAccount = null;
+                isNetworkCorrect = false;
+                updateWalletButton();
+            } else {
+                userAccount = accounts[0];
+                checkNetwork().then(() => {
+                    if (isNetworkCorrect) loadUserData();
+                    updateWalletButton();
+                });
+            }
+        }
+
+        function showWalletNotFoundModal() {
+            const message = `Please install MetaMask or another Web3 wallet to continue.`;
+            const actions = [
+                { text: 'Close', icon: 'fa-solid fa-times', className: 'btn-secondary text-sm', handler: closeNotif }
+            ];
+            showNotif('Wallet Not Found', message, 'error', actions);
+        }
+
+        function formatNumber(num) {
+            return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        }
+
+        async function fetchPurchaseEvents(limit = 15) {
+            if (!saleContractRead) return [];
+
+            try {
+                const latestBlock = await web3Read.eth.getBlockNumber();
+
+                const latestBlockStr = latestBlock.toString();
+                const latestBlockNum = parseInt(latestBlockStr);
+
+                const BLOCK_RANGE = 2000;
+                const fromBlock = Math.max(0, latestBlockNum - BLOCK_RANGE);
+
+                console.log(`Fetching events from block ${fromBlock} to ${latestBlockNum}`);
+
+                const events = await saleContractRead.getPastEvents('TokensPurchased', {
+                    fromBlock: fromBlock,
+                    toBlock: latestBlockNum
+                });
+
+                events.sort((a, b) => {
+                    const blockA = parseInt(a.blockNumber);
+                    const blockB = parseInt(b.blockNumber);
+                    return blockB - blockA;
+                });
+
+                const recent = events.slice(0, limit);
+
+                return await processEvents(recent);
+            } catch (err) {
+                console.error('fetchPurchaseEvents error:', err);
+                return [];
+            }
+        }
+
+        async function processEvents(events) {
+            const enriched = [];
+
+            for (const ev of events) {
+                try {
+                    const block = await web3Read.eth.getBlock(ev.blockNumber);
+
+                    let timestamp;
+                    if (typeof block.timestamp === 'bigint') {
+                        timestamp = Number(block.timestamp);
+                    } else {
+                        timestamp = parseInt(block.timestamp);
+                    }
+
+                    const timeAgo = getTimeAgo(timestamp * 1000);
+
+                    enriched.push({
+                        transactionHash: ev.transactionHash,
+                        purchaser: ev.returnValues.purchaser,
+                        valueRIC: parseFloat(web3Read.utils.fromWei(ev.returnValues.value, 'ether')),
+                        amountRECEH: parseFloat(web3Read.utils.fromWei(ev.returnValues.amount, 'ether')),
+                        timeAgo: timeAgo
+                    });
+                } catch (err) {
+                    console.warn('Error processing event:', err);
+                }
+            }
+
+            return enriched;
+        }
+
+        function getTimeAgo(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (days > 0) return days + 'd ago';
+            if (hours > 0) return hours + 'h ago';
+            if (minutes > 0) return minutes + 'm ago';
+            return 'just now';
+        }
+
+        async function loadPurchaseHistory() {
+            const container = document.getElementById('purchaseListContainer');
+            container.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fa-solid fa-circle-notch fa-spin text-[#FFD700]"></i><p class="mt-2">Loading...</p></div>';
+
+            const events = await fetchPurchaseEvents(15);
+            purchaseEvents = events;
+
+            renderPurchaseHistory(events);
+        }
+
+        function renderPurchaseHistory(events) {
+            const container = document.getElementById('purchaseListContainer');
+
+            if (!events.length) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-4">No purchases yet</div>';
+                return;
+            }
+
+            let html = '';
+
+            events.forEach(ev => {
+                const shortAddr = shortenAddress(ev.purchaser);
+                const recehStr = ev.amountRECEH.toFixed(0);
+                const ricStr = ev.valueRIC.toFixed(2);
+
+                html += `
+                    <div class="purchase-item">
+                        <span class="font-mono text-[#FFD700] text-xs" title="${ev.purchaser}">${shortAddr}</span>
+                        <span class="text-white font-medium text-center">${recehStr} RECEH</span>
+                        <span class="text-gray-400 text-xs text-right">${ricStr} RIC<br><span class="text-gray-600">${ev.timeAgo}</span></span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Initializing RECEH Sale...');
+
+            provider = detectProvider();
+
+            if (!provider) {
+                showWarning('No Web3 wallet detected. Please install MetaMask.');
+            }
+
+            const initOk = await initReadContract();
+            if (!initOk) return;
+
+            document.getElementById('buyBtn').addEventListener('click', buyTokens);
+            document.getElementById('ricInput').addEventListener('input', estimateTokens);
+            document.getElementById('addTokenBtn').addEventListener('click', addTokenToWallet);
+
+            if (provider) {
+                provider.on('accountsChanged', handleAccountsChanged);
+                provider.on('chainChanged', () => window.location.reload());
+            }
+
+            await loadPublicData();
+            await loadPurchaseHistory();
+
+            timerInterval = setInterval(loadPublicData, 15000);
+            countdownInterval = setInterval(updateCountdown, 1000);
+
+            if (provider) {
+                try {
+                    const accounts = await provider.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) await connectWallet(true);
+                } catch (e) { }
+            }
+
+            updateWalletButton();
+
+            console.log('✅ RECEH Sale initialized');
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (timerInterval) clearInterval(timerInterval);
+            if (countdownInterval) clearInterval(countdownInterval);
+        });
+
+        window.closeTxModal = closeTxModal;
+        window.closeNotif = closeNotif;
+        window.copyAddress = copyAddress;
+        window.copyToClipboard = copyToClipboard;
+        window.addTokenToWallet = addTokenToWallet;
+        window.switchToRicheChain = switchToRicheChain;
+    </script>
+</body>
+
+</html>
