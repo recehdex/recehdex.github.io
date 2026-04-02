@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <link rel="shortcut icon" type="image/png" href="https://cryptoreceh.com/favicon.png">
+    <title>RECEH Staking • 30% APY • Mobile Optimized</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #030305;
+            color: white;
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
+            /* Fix for "gelombang" scrolling - stabilkan body */
+            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
+        }
+
+        /* Kontainer utama yang lebih stabil */
+        .main-container {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container-custom {
+            width: 100%;
+            max-width: 100%;
+            padding-left: 16px;
+            padding-right: 16px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (min-width: 768px) {
+            .container-custom {
+                max-width: 1280px;
+                padding-left: 32px;
+                padding-right: 32px;
+            }
+        }
+
+        .cyber-bg {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 10% 20%, rgba(255, 80, 0, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 90% 70%, rgba(255, 160, 0, 0.1) 0%, transparent 45%),
+                radial-gradient(circle at 30% 80%, rgba(255, 100, 0, 0.08) 0%, transparent 55%);
+            animation: subtleBgShift 25s infinite alternate ease-in-out;
+            z-index: -2;
+            pointer-events: none;
+            will-change: transform;
+        }
+
+        @keyframes subtleBgShift {
+            0% {
+                transform: scale(1) translate(0, 0);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(1.05) translate(-10px, -10px);
+                opacity: 1;
+            }
+        }
+
+        /* Loader ring */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #030305;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.4s ease;
+        }
+
+        .loader-ring {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(255, 100, 0, 0.2);
+            border-top: 3px solid #ff4d00;
+            border-right: 3px solid #ff8a00;
+            border-radius: 50%;
+            animation: loaderSpin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+        }
+
+        @keyframes loaderSpin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 100, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff3c00, #ff8a00);
+            box-shadow: 0 6px 18px -4px rgba(255, 80, 0, 0.5);
+            transition: all 0.2s ease;
+            color: white;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            border-radius: 60px;
+            padding: 14px 12px;
+            width: 100%;
+            font-size: 0.9rem;
+            gap: 8px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid #ff8a00;
+            color: #ff8a00;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            border-radius: 60px;
+            padding: 14px 12px;
+            width: 100%;
+            font-size: 0.9rem;
+            gap: 8px;
+        }
+
+        .button-row {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            width: 100%;
+        }
+
+        @media (max-width: 420px) {
+
+            .btn-primary,
+            .btn-outline {
+                padding: 12px 8px;
+                font-size: 0.8rem;
+            }
+        }
+
+        .hologram {
+            position: relative;
+            width: 100%;
+            max-width: 240px;
+            aspect-ratio: 1/1;
+            margin: 0 auto;
+        }
+
+        .hologram-image {
+            position: absolute;
+            inset: 10%;
+            border-radius: 50%;
+            background: url('https://raw.githubusercontent.com/cryptorecehcom/images/refs/heads/main/receh-250x250.png') center/contain no-repeat;
+            filter: drop-shadow(0 0 20px #ff8a00);
+            animation: gentleFloat 4s infinite alternate;
+            z-index: 10;
+        }
+
+        @keyframes gentleFloat {
+            0% {
+                transform: translateY(0px);
+            }
+
+            100% {
+                transform: translateY(-6px);
+            }
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 100, 0, 0.3);
+            border-radius: 24px;
+            padding: 12px 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #ff8a00;
+            line-height: 1.2;
+        }
+
+        @media (min-width: 480px) {
+            .stat-value {
+                font-size: 2rem;
+            }
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 100, 0, 0.2);
+            border-radius: 24px;
+            padding: 18px 12px;
+        }
+
+        .calculator-card {
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 100, 0, 0.4);
+            border-radius: 36px;
+            padding: 24px 20px;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .calc-input {
+            background: #0c0c12;
+            color: #ffb347;
+            border: 1.5px solid #ff8a00;
+            border-radius: 60px;
+            padding: 14px 20px;
+            width: 100%;
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+            transition: 0.2s;
+        }
+
+        .calc-input:focus {
+            border-color: #ff5500;
+            box-shadow: 0 0 0 3px rgba(255, 80, 0, 0.3);
+            background: #111116;
+        }
+
+        .calc-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .calc-result-card {
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 140, 0, 0.5);
+            border-radius: 28px;
+            padding: 14px 6px;
+            text-align: center;
+            transition: 0.1s;
+        }
+
+        .calc-result-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #bbb;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .calc-result-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ffaa33;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .calc-note {
+            font-size: 0.7rem;
+            color: #7e7e8c;
+            text-align: center;
+            margin-top: 18px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 40px;
+            display: inline-block;
+            width: auto;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (max-width: 440px) {
+            .calculator-card {
+                padding: 20px 14px;
+            }
+
+            .calc-input {
+                font-size: 1.25rem;
+                padding: 12px 16px;
+            }
+
+            .calc-result-value {
+                font-size: 1.25rem;
+            }
+
+            .calc-result-label {
+                font-size: 0.65rem;
+            }
+
+            .calc-result-card {
+                padding: 10px 4px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .calc-result-value {
+                font-size: 1.1rem;
+            }
+        }
+
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .how-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 100, 0, 0.2);
+            border-radius: 24px;
+            padding: 16px 8px;
+            text-align: center;
+        }
+
+        section {
+            width: 100%;
+            scroll-margin-top: 20px;
+        }
+
+        .section {
+            opacity: 0;
+            transform: translateY(15px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            will-change: opacity, transform;
+        }
+
+        .section.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        header {
+            background: rgba(3, 3, 5, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 140, 0, 0.25);
+        }
+
+        .py-section-sm {
+            padding-top: 48px;
+            padding-bottom: 48px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        @media (min-width: 768px) {
+            h2 {
+                font-size: 2.3rem;
+            }
+        }
+
+        a,
+        button {
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loader">
+        <div class="loader-ring"></div>
+        <p class="mt-6 text-gray-300 text-sm tracking-widest">RECEH STAKING</p>
+        <p class="text-xs text-gray-500 mt-1">30% APY • MOBILE READY</p>
+    </div>
+
+    <div class="cyber-bg"></div>
+    <div class="main-container">
+        <header class="fixed top-0 w-full z-50 py-2.5">
+            <div class="container-custom flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <img src="https://raw.githubusercontent.com/cryptorecehcom/images/refs/heads/main/receh-250x250.png"
+                        class="w-7 h-7 rounded-full" alt="RECEH">
+                    <span class="font-bold text-lg text-orange-400">RECEH</span>
+                </div>
+                <nav class="hidden md:flex gap-5 text-sm">
+                    <a href="#" class="hover:text-orange-400 transition">Staking</a>
+                    <a href="#" class="hover:text-orange-400 transition">Rewards</a>
+                    <a href="#" class="hover:text-orange-400 transition">FAQ</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="pt-28 pb-8 md:pt-32 md:pb-12">
+            <div class="container-custom">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h1 class="text-4xl sm:text-5xl md:text-6xl font-black leading-tight">
+                            <span
+                                class="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">STAKE
+                                RECEH</span><br>
+                            <span class="text-white">EARN RECEH</span>
+                        </h1>
+                        <p class="mt-4 text-gray-300 text-base sm:text-lg max-w-xl">
+                            Program staking dengan reward harian 30% APY. Lock 30 hari, claim kapan saja.
+                            <span class="text-orange-400 font-semibold">100% on-chain</span> di BSC dan Riche Chain.
+                        </p>
+                        <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-label text-xs">APY</div>
+                                <div class="stat-value">30%</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label text-xs">LOCK</div>
+                                <div class="stat-value">30D</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label text-xs">CLAIM</div>
+                                <div class="stat-value">Daily</div>
+                            </div>
+                        </div>
+                        <div class="button-row">
+                            <a href="https://recehdex.github.io/staking/bsc/" target="_blank" class="btn-primary"><i
+                                    class="fas fa-bolt"></i>STAKE BSC</a>
+                            <a href="https://recehdex.github.io/staking/riche/" target="_blank" class="btn-outline"><i
+                                    class="fas fa-gem"></i>STAKE RICHE</a>
+                        </div>
+                    </div>
+                    <div class="flex justify-center mt-6 md:mt-0">
+                        <div class="hologram">
+                            <div class="hologram-image"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Why Stake -->
+        <section class="section py-section-sm">
+            <div class="container-custom">
+                <h2 class="text-center mb-7">WHY STAKE RECEH?</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon text-2xl">💰</div>
+                        <div class="feature-title font-bold mt-1">30% Fixed APY</div>
+                        <div class="feature-desc text-gray-400 text-xs">Rate tetap, bukan promo</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon text-2xl">⏱️</div>
+                        <div class="feature-title font-bold mt-1">Daily Rewards</div>
+                        <div class="feature-desc text-gray-400 text-xs">Claim tiap saat</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon text-2xl">🔒</div>
+                        <div class="feature-title font-bold mt-1">30 Day Lock</div>
+                        <div class="feature-desc text-gray-400 text-xs">Bisa unstake/perpanjang</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon text-2xl">⛓️</div>
+                        <div class="feature-title font-bold mt-1">Dual Chain</div>
+                        <div class="feature-desc text-gray-400 text-xs">BSC & Riche</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon text-2xl">📜</div>
+                        <div class="feature-title font-bold mt-1">Non-Custodial</div>
+                        <div class="feature-desc text-gray-400 text-xs">Dana di wallet</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon text-2xl">🔄</div>
+                        <div class="feature-title font-bold mt-1">Auto Rollover</div>
+                        <div class="feature-desc text-gray-400 text-xs">Perpanjang 1 klik</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section py-section-sm">
+            <div class="container-custom">
+                <div class="calculator-card">
+                    <h2 class="text-center text-2xl md:text-3xl mb-5">STAKING CALCULATOR</h2>
+
+                    <input type="number" id="stakeAmount" value="10000" class="calc-input" min="100" step="100"
+                        placeholder="Jumlah RECEH" inputmode="numeric">
+
+                    <div class="calc-results">
+                        <div class="calc-result-card">
+                            <div class="calc-result-label">DAILY</div>
+                            <div class="calc-result-value" id="dailyReward">8.22</div>
+                        </div>
+                        <div class="calc-result-card">
+                            <div class="calc-result-label">WEEKLY</div>
+                            <div class="calc-result-value" id="weeklyReward">57.53</div>
+                        </div>
+                        <div class="calc-result-card">
+                            <div class="calc-result-label">30 DAYS</div>
+                            <div class="calc-result-value" id="monthlyReward">246.58</div>
+                        </div>
+                        <div class="calc-result-card">
+                            <div class="calc-result-label">YEARLY</div>
+                            <div class="calc-result-value" id="yearlyReward">3000</div>
+                        </div>
+                    </div>
+
+                    <div class="calc-note">
+                        <i class="fas fa-chart-line mr-1 text-orange-400 text-xs"></i> (Jumlah x 0.3) ÷ 365 = reward
+                        harian
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How staking works -->
+        <section class="section py-section-sm">
+            <div class="container-custom">
+                <h2 class="text-center mb-7">HOW STAKING WORKS</h2>
+                <div class="how-grid">
+                    <div class="how-card">
+                        <div class="how-emoji text-3xl">1️⃣</div>
+                        <div class="how-text font-semibold text-sm">Pilih Jaringan</div>
+                    </div>
+                    <div class="how-card">
+                        <div class="how-emoji text-3xl">2️⃣</div>
+                        <div class="how-text font-semibold text-sm">Connect Wallet</div>
+                    </div>
+                    <div class="how-card">
+                        <div class="how-emoji text-3xl">3️⃣</div>
+                        <div class="how-text font-semibold text-sm">Stake RECEH</div>
+                    </div>
+                    <div class="how-card">
+                        <div class="how-emoji text-3xl">4️⃣</div>
+                        <div class="how-text font-semibold text-sm">Claim Daily</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Badge on-chain -->
+        <section class="section py-4">
+            <div class="container-custom text-center">
+                <div
+                    class="inline-flex items-center gap-2 bg-white/5 border border-orange-500/30 rounded-full px-5 py-2.5 text-xs md:text-sm">
+                    <i class="fas fa-link text-orange-400"></i>
+                    <span>100% ON-CHAIN • BSC • RICHE CHAIN</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="section py-section-sm">
+            <div class="container-custom text-center">
+                <h2 class="mb-5 text-2xl md:text-3xl">READY TO STAKE?</h2>
+                <div class="button-row max-w-md mx-auto">
+                    <a href="https://recehdex.github.io/staking/bsc/" target="_blank" class="btn-primary"><i
+                            class="fas fa-bolt"></i>STAKE ON BSC</a>
+                    <a href="https://recehdex.github.io/staking/riche/" target="_blank" class="btn-outline"><i
+                            class="fas fa-gem"></i>STAKE RICHE</a>
+                </div>
+            </div>
+        </section>
+
+        <footer class="py-6 text-center text-gray-500 text-xs border-t border-orange-500/20 mt-4">
+            <p>© 2026 RECEH STAKING • 30% APY Daily Rewards</p>
+        </footer>
+    </div>
+
+    <script>
+        // Loader fadeout
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if (loader) loader.classList.add('fade-out');
+            setTimeout(() => { if (loader) loader.style.display = 'none'; }, 500);
+        }, 1000);
+
+        // Intersection Observer untuk animasi section
+        const sections = document.querySelectorAll('.section');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('show');
+                    // optional: unobserve after shown for performance
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: "0px 0px -20px 0px" });
+        sections.forEach(sec => observer.observe(sec));
+
+        const stakeInput = document.getElementById('stakeAmount');
+        const dailySpan = document.getElementById('dailyReward');
+        const weeklySpan = document.getElementById('weeklyReward');
+        const monthlySpan = document.getElementById('monthlyReward');
+        const yearlySpan = document.getElementById('yearlyReward');
+
+        function updateCalculator() {
+            let rawValue = stakeInput.value.trim();
+            if (rawValue === "") rawValue = "0";
+            let val = parseFloat(rawValue);
+            if (isNaN(val)) val = 0;
+            if (val < 0) val = 0;
+
+            const maxSafe = 1000000000;
+            if (val > maxSafe) val = maxSafe;
+
+            const daily = val * 0.3 / 365;
+
+            dailySpan.textContent = daily.toFixed(2);
+            weeklySpan.textContent = (daily * 7).toFixed(2);
+            monthlySpan.textContent = (daily * 30).toFixed(2);
+            // Yearly: total reward tahunan (30% dari jumlah)
+            let yearlyTotal = val * 0.3;
+            // Jika yearlyTotal desimal, tampilkan tanpa koma jika bulat
+            if (Number.isInteger(yearlyTotal)) {
+                yearlySpan.textContent = yearlyTotal.toFixed(0);
+            } else {
+                yearlySpan.textContent = yearlyTotal.toFixed(2);
+            }
+
+            if (val === 10000) {
+
+                if (dailySpan.textContent !== "8.22") dailySpan.textContent = "8.22";
+                if (weeklySpan.textContent !== "57.53") weeklySpan.textContent = "57.53";
+                if (monthlySpan.textContent !== "246.58") monthlySpan.textContent = "246.58";
+                if (yearlySpan.textContent !== "3000") yearlySpan.textContent = "3000";
+            }
+        }
+
+        let debounceTimer;
+        stakeInput.addEventListener('input', function (e) {
+
+            let cleaned = this.value.replace(/[^0-9.]/g, '');
+
+            let parts = cleaned.split('.');
+            if (parts.length > 2) cleaned = parts[0] + '.' + parts.slice(1).join('');
+            if (cleaned !== this.value) this.value = cleaned;
+
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                updateCalculator();
+            }, 10);
+        });
+
+        // juga update saat blur
+        stakeInput.addEventListener('blur', function () {
+            let v = parseFloat(this.value);
+            if (isNaN(v)) this.value = 10000;
+            else if (v < 100 && v !== 0) this.value = 100;
+            else if (v < 0) this.value = 0;
+            updateCalculator();
+        });
+
+        updateCalculator();
+
+        const styleFix = document.createElement('style');
+        styleFix.textContent = `
+        body { -webkit-transform: translateZ(0); transform: translateZ(0); }
+        .calculator-card, .feature-card, .stat-card { backface-visibility: hidden; }
+    `;
+        document.head.appendChild(styleFix);
+
+        const allInputs = document.querySelectorAll('input');
+        allInputs.forEach(inp => {
+            inp.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            }, { passive: false });
+        });
+
+        const headerElem = document.querySelector('header');
+        if (headerElem) {
+            const headerHeight = headerElem.offsetHeight;
+            document.documentElement.style.scrollPaddingTop = `${headerHeight + 10}px`;
+        }
+    </script>
+</body>
+
+</html>
