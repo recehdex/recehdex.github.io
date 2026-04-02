@@ -28,7 +28,7 @@ const CHAINS = {
     hex: "0x38",
     name: "BNB Smart Chain",
     shortName: "BSC",
-    rpc: "https://bsc-dataseed1.binance.org/",
+    rpc: "https://bsc-rpc.publicnode.com/",
     explorer: "https://bscscan.com/",
     symbol: "BNB",
     decimals: 18,
