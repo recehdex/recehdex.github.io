@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
-    <link rel="shortcut icon" type="image/png"
-        href="https://raw.githubusercontent.com/recehdex/recehdex.github.io/refs/heads/main/favicon.png" />
+    <link rel="shortcut icon" type="image/png" href="https://cryptoreceh.com/favicon.png" />
     <title>recehDEX</title>
-    <meta name="description" content="Best DEX to Swap & Provide Liquidity for Any Token on BNB Smart Chain." />
+    <meta name="description"
+        content="Best DEX to Swap & Provide Liquidity for Any Token on BNB Smart Chain and Riche Chain Mainnet" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap"
@@ -15,7 +15,6 @@
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <link rel="stylesheet" href="style.css" />
     <style>
-        /* ── Chain image logo di dropdown item ── */
         .ci-logo-img {
             width: 22px;
             height: 22px;
@@ -24,7 +23,6 @@
             flex-shrink: 0;
         }
 
-        /* Override ci-logo (dulu teks/emoji) supaya tidak menambah padding aneh */
         .chain-item-btn .ci-logo {
             display: none;
         }
@@ -54,10 +52,10 @@
         </div>
 
         <div class="nav-end">
-            <!-- Chain selector dropdown trigger — default BSC -->
+
             <div class="chain-dropdown-wrap" id="chainDropdownWrap">
                 <button class="chain-trigger-btn" id="chainTriggerBtn" title="Switch Network">
-                    <!-- Gambar icon chain — src diupdate dinamis oleh JS -->
+
                     <img src="https://raw.githubusercontent.com/recehdex/recehdex.github.io/refs/heads/main/images/bsc-logo-100x100.png"
                         class="chain-icon-img" style="width:20px;height:20px;border-radius:50%;object-fit:cover;"
                         alt="BSC" />
@@ -72,7 +70,6 @@
                 </div>
             </div>
 
-            <!-- chainPill hidden — dipakai app.js updateChainPill() -->
             <div class="chain-pill sr-only" id="chainPill">
                 <span class="pulse-dot"></span>
                 <span class="chain-label">BSC</span>
