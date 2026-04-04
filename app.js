@@ -1,28 +1,6 @@
 "use strict";
+
 const CHAINS = {
-  riche: {
-    id: 132026,
-    hex: "0x203FA",
-    name: "Riche Chain Mainnet",
-    shortName: "Riche Chain",
-    rpc: "https://seed-richechain.com/",
-    explorer: "https://richescan.com/",
-    symbol: "RIC",
-    decimals: 18,
-    FACTORY: "0xAeEdf8B9925c6316171f7c2815e387DE596Fa11B",
-    ROUTER: "0x8E9556415124b6C726D5C3610d25c24Be8AC2304",
-    WNATIVE: "0xEa126036c94Ab6A384A25A70e29E2fE2D4a91e68",
-    WNATIVE_SYMBOL: "WRIC",
-    WNATIVE_NAME: "Wrapped RIC",
-    WNATIVE_LOGO:
-      "https://raw.githubusercontent.com/recehdex/token-logo/refs/heads/main/WRIC.png",
-    TOKEN_LIST_URL:
-      "https://raw.githubusercontent.com/recehdex/token-list/refs/heads/main/riche-chain.json",
-    INIT_CODE_HASH:
-      "0x1a7269cf92faf25d5d029d824efa09ac194fea41206609a271df037af4772a43",
-    color: "#00ffff",
-    logo: "⬡",
-  },
   bsc: {
     id: 56,
     hex: "0x38",
@@ -44,7 +22,30 @@ const CHAINS = {
     INIT_CODE_HASH:
       "0xacbe571ca822f0db25af9ae298ee37b6f490444417fa384a4fabcdc84d08aaea",
     color: "#f0b90b",
-    logo: "◆",
+    logo: "https://raw.githubusercontent.com/recehdex/recehdex.github.io/refs/heads/main/images/bsc-logo-100x100.png",
+  },
+  riche: {
+    id: 132026,
+    hex: "0x203BA",
+    name: "Riche Chain",
+    shortName: "RICHE",
+    rpc: "https://seed-richechain.com/",
+    explorer: "https://richescan.com/",
+    symbol: "RIC",
+    decimals: 18,
+    FACTORY: "0xAeEdf8B9925c6316171f7c2815e387DE596Fa11B",
+    ROUTER: "0x8E9556415124b6C726D5C3610d25c24Be8AC2304",
+    WNATIVE: "0xEa126036c94Ab6A384A25A70e29E2fE2D4a91e68",
+    WNATIVE_SYMBOL: "WRIC",
+    WNATIVE_NAME: "Wrapped RIC",
+    WNATIVE_LOGO:
+      "https://raw.githubusercontent.com/recehdex/token-logo/refs/heads/main/WRIC.png",
+    TOKEN_LIST_URL:
+      "https://raw.githubusercontent.com/recehdex/token-list/refs/heads/main/riche-chain.json",
+    INIT_CODE_HASH:
+      "0x1a7269cf92faf25d5d029d824efa09ac194fea41206609a271df037af4772a43",
+    color: "#00ffff",
+    logo: "https://raw.githubusercontent.com/recehdex/token-logo/refs/heads/main/WRIC.png",
   },
 };
 
@@ -71,8 +72,9 @@ const S = {
   txns: [],
   positions: [],
   quoteTimer: null,
-  activeChainKey: "riche", // 'riche' | 'bsc'
-  isWrapMode: false, // true when swap is a native↔wrapped pair
+  activeChainKey: "bsc",
+  isWrapMode: false,
+  isSwitchingChain: false,
 };
 
 // ─── PERSIST ─────────────────────────────────────────────────────────────────
@@ -94,7 +96,7 @@ S.customTokens = load("custom", []);
 S.txns = load("txns", []);
 S.slippage = load("slip", 0.5);
 S.deadline = load("ddl", 20);
-S.activeChainKey = load("chainKey", "riche");
+S.activeChainKey = load("chainKey", "bsc");
 
 // ─── CHAIN ACCESSORS ─────────────────────────────────────────────────────────
 function CHAIN() {
@@ -102,7 +104,15 @@ function CHAIN() {
 }
 function C() {
   return CHAIN();
-} // alias
+}
+function getChainByKey(key) {
+  const chain = CHAINS[key];
+  if (!chain || !chain.id || !chain.hex) {
+    console.error("Chain tidak valid:", key);
+    return null;
+  }
+  return chain;
+}
 function allToks() {
   return [
     ...S.allTokens,
@@ -113,7 +123,7 @@ function routeAddr(t) {
   return t.isNative ? CHAIN().WNATIVE : t.address;
 }
 
-// ─── BUILT-IN TOKENS (per chain) ─────────────────────────────────────────────
+// ─── BUILT-IN TOKENS ─────────────────────────────────────────────────────────
 function makeNativeToken(chainKey) {
   const ch = CHAINS[chainKey];
   return {
@@ -223,8 +233,6 @@ function minAmtLiq(bn) {
   const bps = Math.floor(10000 - S.liqSlippage * 100);
   return bn.mul(bps).div(10000);
 }
-
-// Check if a pair is native↔wrapped (wrap/unwrap mode)
 function isWrapUnwrapPair(tA, tB) {
   if (!tA || !tB) return false;
   const wnLower = CHAIN().WNATIVE.toLowerCase();
@@ -247,7 +255,6 @@ function showTx(t, s) {
 function hideTx() {
   $("txMask").classList.remove("show");
 }
-
 function toast(msg, type = "info", ms = 4000) {
   const el = document.createElement("div");
   el.className = "toast " + type;
@@ -258,14 +265,12 @@ function toast(msg, type = "info", ms = 4000) {
     setTimeout(() => el.remove(), 300);
   }, ms);
 }
-
 function openModal(id) {
   $(id).classList.add("open");
 }
 function closeModal(id) {
   $(id).classList.remove("open");
 }
-
 function escHtml(s) {
   return String(s).replace(
     /[&<>"']/g,
@@ -347,10 +352,9 @@ function initChainUI() {
         "chain-item-btn" + (key === S.activeChainKey ? " active" : "");
       btn.dataset.chainKey = key;
       btn.style.setProperty("--chain-color", ch.color);
+      const logoHtml = `<img class="ci-logo-img" src="${ch.logo}" alt="${ch.shortName}" onerror="this.style.opacity='.4'" />`;
       btn.innerHTML =
-        '<span class="ci-logo">' +
-        ch.logo +
-        "</span>" +
+        logoHtml +
         '<span class="ci-name">' +
         ch.shortName +
         "</span>" +
@@ -364,19 +368,27 @@ function initChainUI() {
       wrap.appendChild(btn);
     });
   };
-
   makeItems("chainSelector", closeChainDropdown);
   makeItems("chainSelectorMob", closeMobMenu);
   updateChainPill();
 }
-
 function closeChainDropdown() {
   const dd = $("chainDropdown");
   if (dd) dd.classList.remove("open");
 }
-
 function updateChainPill() {
   const ch = CHAIN();
+  const triggerBtn = $("chainTriggerBtn");
+  if (triggerBtn) {
+    triggerBtn.style.setProperty("--chain-color", ch.color);
+    const iconImg = triggerBtn.querySelector(".chain-icon-img");
+    if (iconImg) {
+      iconImg.src = ch.logo;
+      iconImg.alt = ch.shortName;
+    }
+  }
+  const triggerLabel = $("chainTriggerLabel");
+  if (triggerLabel) triggerLabel.textContent = ch.shortName;
   const pill = $("chainPill");
   if (pill) {
     pill.style.borderColor = ch.color;
@@ -384,89 +396,209 @@ function updateChainPill() {
     const lbl = pill.querySelector(".chain-label");
     if (lbl) lbl.textContent = ch.shortName;
   }
-  const triggerLabel = $("chainTriggerLabel");
-  if (triggerLabel) triggerLabel.textContent = ch.shortName;
-  const triggerBtn = $("chainTriggerBtn");
-  if (triggerBtn) {
-    triggerBtn.style.setProperty("--chain-color", ch.color);
-    const dot = triggerBtn.querySelector(".pulse-dot");
-    if (dot) dot.style.background = ch.color;
+  const wdNet = $("wdNet");
+  if (wdNet) wdNet.textContent = `${ch.name} · ID ${ch.id}`;
+  if ($("wdBal") && S.account) updateWdBal();
+}
+
+// ─── REQUEST SWITCH CHAIN (FIXED) ───────────────────────────────────────────
+async function requestWalletChainSwitch(key) {
+  if (!window.ethereum) {
+    toast("Wallet tidak terdeteksi!", "err");
+    return false;
+  }
+  const ch = getChainByKey(key);
+  if (!ch) {
+    toast(`Chain ${key} tidak dikenali`, "err");
+    return false;
+  }
+  const chainIdHex = ch.hex.toLowerCase();
+  try {
+    console.log(`🔄 Mencoba beralih ke ${ch.name} (ID: ${chainIdHex})`);
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: chainIdHex }],
+    });
+    console.log(`✅ Berhasil beralih ke ${ch.name}`);
+    return true;
+  } catch (switchError) {
+    if (switchError.code === 4902) {
+      console.log(`➕ Menambahkan chain ${ch.name} ke wallet...`);
+      try {
+        await window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: chainIdHex,
+              chainName: ch.name,
+              rpcUrls: [ch.rpc],
+              nativeCurrency: {
+                name: ch.symbol,
+                symbol: ch.symbol,
+                decimals: ch.decimals || 18,
+              },
+              blockExplorerUrls: [ch.explorer],
+            },
+          ],
+        });
+        console.log(`✅ Chain ${ch.name} berhasil ditambahkan`);
+        return true;
+      } catch (addError) {
+        console.error("Gagal menambah chain:", addError);
+        if (
+          addError.message &&
+          addError.message.includes("same RPC endpoint")
+        ) {
+          toast(
+            `Jaringan ${ch.name} sudah ada. Silakan pilih manual di wallet.`,
+            "warn",
+          );
+        } else {
+          toast(
+            `Gagal menambah chain: ${addError.message || "Unknown error"}`,
+            "err",
+          );
+        }
+        return false;
+      }
+    }
+    if (switchError.code === 4001) {
+      toast("Anda menolak pergantian jaringan di wallet", "warn");
+      return false;
+    }
+    console.error("Switch chain error:", switchError);
+    toast(
+      `Gagal beralih jaringan: ${switchError.message || "Unknown error"}`,
+      "err",
+    );
+    return false;
   }
 }
 
-async function switchActiveChain(key) {
-  if (key === S.activeChainKey) return;
-  S.activeChainKey = key;
-  save("chainKey", key);
-
-  // Reset token selections and positions
+// ─── RESET STATE ────────────────────────────────────────────────────────────
+function resetChainDependentState() {
   S.tIn = null;
   S.tOut = null;
   S.liqA = null;
   S.liqB = null;
+  S.importA = null;
+  S.importB = null;
   S.positions = [];
   S.allTokens = [];
+  if (S.quoteTimer) {
+    clearTimeout(S.quoteTimer);
+    S.quoteTimer = null;
+  }
+  const amountIn = $("amountIn"),
+    amountOut = $("amountOut"),
+    liqAmtA = $("liqAmtA"),
+    liqAmtB = $("liqAmtB");
+  if (amountIn) amountIn.value = "";
+  if (amountOut) amountOut.value = "";
+  if (liqAmtA) liqAmtA.value = "";
+  if (liqAmtB) liqAmtB.value = "";
+  const swapDetails = $("swapDetails");
+  if (swapDetails) swapDetails.style.display = "none";
+  const liqForm = $("liqForm");
+  if (liqForm) liqForm.classList.add("hidden");
+  const liqPrompt = $("liqPrompt");
+  if (liqPrompt) liqPrompt.classList.remove("hidden");
+}
 
+// ─── REINITIALIZE AFTER SWITCH ──────────────────────────────────────────────
+async function reinitializeAfterChainSwitch() {
   initChainUI();
   initBaseTokens();
-  loadTokenList();
-
+  await loadTokenList();
+  S.customTokens
+    .filter((t) => (t.chainKey || "bsc") === S.activeChainKey)
+    .forEach((t) => {
+      const a = t.address.toLowerCase();
+      if (!S.allTokens.find((x) => x.address.toLowerCase() === a))
+        S.allTokens.push(t);
+    });
   updateInUI();
   updateOutUI();
   updateLiqUI();
   updateSwapBtn();
   updateAddLiqBtn();
   renderPositions([]);
-
-  if (S.account) {
-    // If wallet connected, try to switch wallet chain too
-    await switchWalletChain();
+  const balIn = $("balIn"),
+    balOut = $("balOut"),
+    liqBalA = $("liqBalA"),
+    liqBalB = $("liqBalB");
+  if (balIn) balIn.textContent = "Balance: —";
+  if (balOut) balOut.textContent = "Balance: —";
+  if (liqBalA) liqBalA.textContent = "Balance: —";
+  if (liqBalB) liqBalB.textContent = "Balance: —";
+  const tokModal = $("tokModalWrap");
+  if (tokModal && tokModal.classList.contains("open")) {
+    const searchInput = $("tokSearch");
+    renderTokList(searchInput ? searchInput.value : "");
   }
-
-  toast(`Switched to ${CHAIN().name}`, "info");
 }
 
-async function switchWalletChain() {
-  if (!window.ethereum) return;
+// ─── REFRESH WALLET AFTER SWITCH ────────────────────────────────────────────
+async function refreshWalletAfterChainSwitch() {
   try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: CHAIN().hex }],
-    });
     S.provider = new ethers.providers.Web3Provider(window.ethereum);
     S.signer = S.provider.getSigner();
-    S.chainOk = true;
-    refreshBals();
-    loadPositions();
-  } catch (e) {
-    if (e.code === 4902) {
-      try {
-        await window.ethereum.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: CHAIN().hex,
-              chainName: CHAIN().name,
-              rpcUrls: [CHAIN().rpc],
-              nativeCurrency: {
-                name: CHAIN().name,
-                symbol: CHAIN().symbol,
-                decimals: 18,
-              },
-              blockExplorerUrls: [CHAIN().explorer],
-            },
-          ],
-        });
-        S.provider = new ethers.providers.Web3Provider(window.ethereum);
-        S.signer = S.provider.getSigner();
-        S.chainOk = true;
-      } catch (e2) {
-        S.chainOk = false;
-      }
-    } else {
+    const network = await S.provider.getNetwork();
+    if (network.chainId !== CHAIN().id) {
+      console.warn(`Network mismatch`);
       S.chainOk = false;
+      return;
     }
+    S.chainOk = true;
+    await refreshBals();
+    await loadPositions();
+    await updateWdBal();
+    console.log("✅ Wallet data refreshed for new chain");
+  } catch (error) {
+    console.error("Failed to refresh wallet:", error);
+    S.chainOk = false;
+    S.provider = null;
+    S.signer = null;
   }
+}
+
+// ─── SWITCH ACTIVE CHAIN ────────────────────────────────────────────────────
+async function switchActiveChain(key) {
+  if (key === S.activeChainKey) {
+    console.log("Sudah di chain yang sama");
+    return;
+  }
+  if (S.isSwitchingChain) {
+    toast("Sedang beralih jaringan, tunggu sebentar...", "warn");
+    return;
+  }
+  const newChain = getChainByKey(key);
+  if (!newChain) {
+    toast(`Chain ${key} tidak tersedia`, "err");
+    return;
+  }
+  S.isSwitchingChain = true;
+  toast(`⏳ Beralih ke ${newChain.name}...`, "info", 5000);
+  if (S.account && window.ethereum) {
+    const switched = await requestWalletChainSwitch(key);
+    if (!switched) {
+      S.isSwitchingChain = false;
+      toast(`❌ Gagal beralih ke ${newChain.name}`, "err");
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+  const oldChainKey = S.activeChainKey;
+  S.activeChainKey = key;
+  save("chainKey", key);
+  resetChainDependentState();
+  await reinitializeAfterChainSwitch();
+  if (S.account && window.ethereum) {
+    await refreshWalletAfterChainSwitch();
+  }
+  S.isSwitchingChain = false;
+  toast(`✅ Berhasil beralih ke ${CHAIN().name}`, "ok");
+  console.log(`✨ Chain switched: ${oldChainKey} → ${key}`);
 }
 
 // ─── BASE TOKEN INIT ─────────────────────────────────────────────────────────
@@ -475,14 +607,12 @@ function initBaseTokens() {
   const native = makeNativeToken(key);
   const wrapped = makeWrappedToken(key);
   S.allTokens = [native, wrapped];
-
-  // Merge custom tokens for this chain
   const seen = new Set([
     native.address.toLowerCase(),
     wrapped.address.toLowerCase(),
   ]);
   S.customTokens
-    .filter((t) => (t.chainKey || "riche") === key)
+    .filter((t) => (t.chainKey || "bsc") === key)
     .forEach((t) => {
       if (!seen.has(t.address.toLowerCase())) {
         S.allTokens.push(t);
@@ -491,17 +621,15 @@ function initBaseTokens() {
     });
 }
 
-// ─── TOKEN LIST ───────────────────────────────────────────────────────────────
+// ─── TOKEN LIST ──────────────────────────────────────────────────────────────
 async function loadTokenList() {
   const url = CHAIN().TOKEN_LIST_URL;
   if (!url) return;
-
   const urls = [
     url,
     "https://corsproxy.io/?" + encodeURIComponent(url),
     "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
   ];
-
   let data = null;
   for (const u of urls) {
     try {
@@ -514,13 +642,10 @@ async function loadTokenList() {
       data = null;
     }
   }
-
   if (!data || !Array.isArray(data.tokens)) return;
-
   const ch = CHAIN();
   const wnLower = ch.WNATIVE.toLowerCase();
   const seen = new Set(S.allTokens.map((t) => t.address.toLowerCase()));
-
   data.tokens
     .filter((t) => !t.chainId || t.chainId === ch.id)
     .forEach((t) => {
@@ -537,25 +662,19 @@ async function loadTokenList() {
       });
       seen.add(addr);
     });
-
-  if ($("tokModalWrap").classList.contains("open")) {
+  if ($("tokModalWrap").classList.contains("open"))
     renderTokList($("tokSearch").value);
-  }
 }
 
 // ─── URL PARAMETERS ──────────────────────────────────────────────────────────
 async function applyUrlParams() {
   const params = new URLSearchParams(window.location.search);
-  const inputCurrency = params.get("inputCurrency");
-  const outputCurrency = params.get("outputCurrency");
-  const page = params.get("page");
-
+  const inputCurrency = params.get("inputCurrency"),
+    outputCurrency = params.get("outputCurrency"),
+    page = params.get("page");
   if (page && ["swap", "liquidity", "pool"].includes(page)) navTo(page);
-
   if (inputCurrency || outputCurrency) {
-    // Give token list time to load
     await new Promise((r) => setTimeout(r, 800));
-
     if (inputCurrency) {
       const t = resolveUrlToken(inputCurrency);
       if (t) {
@@ -570,7 +689,6 @@ async function applyUrlParams() {
         updateOutUI();
       }
     }
-    // Validate no duplicates
     if (S.tIn && S.tOut && S.tIn.address === S.tOut.address) {
       S.tOut = null;
       updateOutUI();
@@ -578,34 +696,24 @@ async function applyUrlParams() {
     refreshBals();
   }
 }
-
 function resolveUrlToken(value) {
   if (!value) return null;
   const lower = value.toLowerCase();
-
-  // native keyword
   if (
     lower === "native" ||
     lower === "eth" ||
     lower === "bnb" ||
     lower === "ric"
-  ) {
+  )
     return makeNativeToken(S.activeChainKey);
-  }
-
-  // address lookup
   const all = allToks();
   const found = all.find((t) => t.address.toLowerCase() === lower);
   if (found) return found;
-
-  // not found — will try async fetch, but return null for now
-  if (value.startsWith("0x") && value.length === 42) {
+  if (value.startsWith("0x") && value.length === 42)
     fetchAndSetUrlToken(value, "pending_out");
-  }
   return null;
 }
-
-async function fetchAndSetUrlToken(addr, slot) {
+async function fetchAndSetUrlToken(addr) {
   try {
     const c = erc20(addr);
     const [name, sym, dec] = await Promise.all([
@@ -623,7 +731,6 @@ async function fetchAndSetUrlToken(addr, slot) {
       chainKey: S.activeChainKey,
     };
     S.allTokens.push(t);
-    // Assign based on what's still missing
     if (!S.tIn) {
       S.tIn = t;
       updateInUI();
@@ -637,7 +744,7 @@ async function fetchAndSetUrlToken(addr, slot) {
   }
 }
 
-// ─── WALLET ───────────────────────────────────────────────────────────────────
+// ─── WALLET ──────────────────────────────────────────────────────────────────
 async function connectWallet() {
   if (!window.ethereum) {
     toast("No wallet detected. Install MetaMask.", "err");
@@ -662,18 +769,16 @@ async function connectWallet() {
     else toast("Connect failed: " + (e.message || e), "err");
   }
 }
-
 async function ensureChain() {
   try {
     const net = await S.provider.getNetwork();
-    if (net.chainId !== CHAIN().id) await switchChain();
+    if (net.chainId !== CHAIN().id) await switchChainWallet();
     S.chainOk = true;
   } catch {
     S.chainOk = false;
   }
 }
-
-async function switchChain() {
+async function switchChainWallet() {
   try {
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
@@ -700,7 +805,6 @@ async function switchChain() {
     } else throw e;
   }
 }
-
 function disconnectWallet() {
   S.provider = null;
   S.signer = null;
@@ -714,7 +818,6 @@ function disconnectWallet() {
   $("balOut").textContent = "Balance: —";
   $("wdBal").textContent = "0 " + CHAIN().symbol;
 }
-
 function updateWalletUI() {
   const wpText = $("wpText");
   if (S.account) {
@@ -738,7 +841,6 @@ function updateWalletUI() {
     });
   }
 }
-
 async function updateWdBal() {
   if (!S.account || !S.provider) return;
   try {
@@ -748,7 +850,7 @@ async function updateWdBal() {
   } catch {}
 }
 
-// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
 function navTo(page) {
   document
     .querySelectorAll(".page")
@@ -760,7 +862,6 @@ function navTo(page) {
   if (pg) pg.classList.add("active");
   if (page === "pool") loadPositions();
 }
-
 function closeMobMenu() {
   $("mobMenu").classList.remove("open");
   $("mobOverlay").classList.remove("show");
@@ -776,12 +877,10 @@ function openTokModal(ctx) {
   openModal("tokModalWrap");
   setTimeout(() => $("tokSearch").focus(), 150);
 }
-
 function closeTokModal() {
   closeModal("tokModalWrap");
   S.modalCtx = null;
 }
-
 function renderTokList(q) {
   const all = allToks();
   const search = q.trim().toLowerCase();
@@ -793,8 +892,6 @@ function renderTokList(q) {
           t.address.toLowerCase().includes(search),
       )
     : all;
-
-  // Determine which address is "already selected" on the other side
   let otherAddr = null;
   const ctx = S.modalCtx;
   if (ctx === "in" && S.tOut) otherAddr = S.tOut.address.toLowerCase();
@@ -805,8 +902,6 @@ function renderTokList(q) {
     otherAddr = S.importB.address.toLowerCase();
   if (ctx === "importB" && S.importA)
     otherAddr = S.importA.address.toLowerCase();
-
-  // Common chips
   const chips = $("commonChips");
   chips.innerHTML = "";
   all.slice(0, 8).forEach((t) => {
@@ -821,23 +916,18 @@ function renderTokList(q) {
     if (!disabled) b.addEventListener("click", () => selectTok(t));
     chips.appendChild(b);
   });
-
   const inner = $("tokListInner");
   inner.innerHTML = "";
-
   if (
     search.startsWith("0x") &&
     search.length === 42 &&
     !all.find((x) => x.address.toLowerCase() === search)
-  ) {
+  )
     fetchAddrToken(search);
-  }
-
   if (!list.length) {
     inner.innerHTML = '<div class="loading-row">No tokens found</div>';
     return;
   }
-
   list.forEach((t) => {
     const disabled = otherAddr && t.address.toLowerCase() === otherAddr;
     const safeId = "tbal_" + t.address.replace(/[^a-zA-Z0-9]/g, "_");
@@ -846,29 +936,18 @@ function renderTokList(q) {
     const ico = t.logoURI
       ? `<div class="tok-ico"><img src="${t.logoURI}" alt="" onerror="this.style.display='none';this.parentNode.textContent='${escHtml(t.symbol.slice(0, 2))}'"/></div>`
       : `<div class="tok-ico">${escHtml(t.symbol.slice(0, 2))}</div>`;
-    row.innerHTML = `
-      ${ico}
-      <div class="tok-inf">
-        <div class="tok-sym">${escHtml(t.symbol)}${disabled ? ' <span class="tok-used">Selected</span>' : ""}</div>
-        <div class="tok-name">${escHtml(t.name)}</div>
-      </div>
-      <div class="tok-bal" id="${safeId}">—</div>
-    `;
-    if (!disabled) {
-      row.addEventListener("click", () => selectTok(t));
-    }
+    row.innerHTML = `${ico}<div class="tok-inf"><div class="tok-sym">${escHtml(t.symbol)}${disabled ? ' <span class="tok-used">Selected</span>' : ""}</div><div class="tok-name">${escHtml(t.name)}</div></div><div class="tok-bal" id="${safeId}">—</div>`;
+    if (!disabled) row.addEventListener("click", () => selectTok(t));
     inner.appendChild(row);
-    if (S.account && !disabled) {
+    if (S.account && !disabled)
       getBal(t, S.account)
         .then((b) => {
           const el = document.getElementById(safeId);
           if (el) el.textContent = fmt(b, t.decimals, 4);
         })
         .catch(() => {});
-    }
   });
 }
-
 async function fetchAddrToken(addr) {
   try {
     const c = erc20(addr);
@@ -888,20 +967,13 @@ async function fetchAddrToken(addr) {
     };
     if (
       !S.allTokens.find((x) => x.address.toLowerCase() === addr.toLowerCase())
-    ) {
+    )
       S.allTokens.push(t);
-    }
     const inner = $("tokListInner");
     if (!inner) return;
     const row = document.createElement("div");
     row.className = "tok-item";
-    row.innerHTML = `
-      <div class="tok-ico">${escHtml(sym.slice(0, 2))}</div>
-      <div class="tok-inf">
-        <div class="tok-sym">${escHtml(sym)} <span style="font-size:10px;color:var(--yellow);margin-left:4px">Custom</span></div>
-        <div class="tok-name">${escHtml(name)} · ${short(addr)}</div>
-      </div>
-    `;
+    row.innerHTML = `<div class="tok-ico">${escHtml(sym.slice(0, 2))}</div><div class="tok-inf"><div class="tok-sym">${escHtml(sym)} <span style="font-size:10px;color:var(--yellow);margin-left:4px">Custom</span></div><div class="tok-name">${escHtml(name)} · ${short(addr)}</div></div>`;
     row.addEventListener("click", () => {
       if (
         !S.customTokens.find(
@@ -918,14 +990,11 @@ async function fetchAddrToken(addr) {
     console.warn("fetchAddrToken failed:", e);
   }
 }
-
 function selectTok(t) {
   const ctx = S.modalCtx;
   if (!ctx) return;
   closeTokModal();
-
   if (ctx === "in") {
-    // If same as tOut, swap them
     if (S.tOut && S.tOut.address === t.address) {
       S.tOut = S.tIn;
       updateOutUI();
@@ -972,7 +1041,6 @@ function selectTok(t) {
   }
   refreshBals();
 }
-
 function setTokUI(logoId, symId, t) {
   const logo = $(logoId),
     sym = $(symId);
@@ -995,27 +1063,22 @@ function setTokUI(logoId, symId, t) {
     }
   }
 }
-
 function updateInUI() {
   setTokUI("logoIn", "symIn", S.tIn);
   detectWrapMode();
   getQuote();
   updateSwapBtn();
 }
-
 function updateOutUI() {
   setTokUI("logoOut", "symOut", S.tOut);
   detectWrapMode();
   getQuote();
   updateSwapBtn();
 }
-
-// ─── WRAP MODE DETECTION ─────────────────────────────────────────────────────
 function detectWrapMode() {
   S.isWrapMode = isWrapUnwrapPair(S.tIn, S.tOut);
   const wrapBanner = $("wrapBanner");
   if (!wrapBanner) return;
-
   if (S.isWrapMode) {
     const wrapping = S.tIn && S.tIn.isNative;
     wrapBanner.textContent = wrapping
@@ -1026,14 +1089,11 @@ function detectWrapMode() {
     wrapBanner.style.display = "none";
   }
 }
-
-// ─── BALANCES ─────────────────────────────────────────────────────────────────
 async function getBal(t, addr) {
   if (!addr) return ethers.BigNumber.from(0);
   const p = S.provider || readProv();
   return t.isNative ? p.getBalance(addr) : erc20(t.address, p).balanceOf(addr);
 }
-
 async function refreshBals() {
   if (!S.account) return;
   if (S.tIn)
@@ -1061,12 +1121,8 @@ async function refreshBals() {
       })
       .catch(() => {});
 }
-
-// ─── SWAP QUOTE ───────────────────────────────────────────────────────────────
 async function getQuote() {
   const amtStr = $("amountIn").value;
-
-  // Wrap mode: 1:1 always
   if (S.isWrapMode) {
     if (amtStr && parseFloat(amtStr) > 0) {
       $("amountOut").value = amtStr;
@@ -1084,7 +1140,6 @@ async function getQuote() {
     updateSwapBtn();
     return;
   }
-
   if (!S.tIn || !S.tOut || !amtStr || parseFloat(amtStr) <= 0) {
     $("amountOut").value = "";
     $("swapDetails").style.display = "none";
@@ -1098,13 +1153,11 @@ async function getQuote() {
     const outs = await r.getAmountsOut(amtIn, path);
     const amtOut = outs[outs.length - 1];
     $("amountOut").value = fmt(amtOut, S.tOut.decimals, 8);
-
     const rateNum =
       parseFloat(ethers.utils.formatUnits(amtOut, S.tOut.decimals)) /
       parseFloat(amtStr);
     $("swapRate").textContent =
       `1 ${S.tIn.symbol} = ${rateNum.toFixed(6)} ${S.tOut.symbol}`;
-
     try {
       const f = factory(prov);
       const pa = await f.getPair(routeAddr(S.tIn), routeAddr(S.tOut));
@@ -1124,7 +1177,6 @@ async function getQuote() {
           impact < 1 ? "imp-low" : impact < 5 ? "imp-mid" : "imp-high";
       }
     } catch {}
-
     $("minRcv").textContent =
       `${fmt(minAmt(amtOut), S.tOut.decimals, 6)} ${S.tOut.symbol}`;
     $("lpFee").textContent =
@@ -1140,15 +1192,12 @@ async function getQuote() {
     updateSwapBtn();
   }
 }
-
-// ─── SWAP BUTTON ─────────────────────────────────────────────────────────────
 function updateSwapBtn() {
   const btn = $("swapBtn");
-  const amtIn = $("amountIn").value;
-  const amtOut = $("amountOut").value;
+  const amtIn = $("amountIn").value,
+    amtOut = $("amountOut").value;
   btn.onclick = null;
   btn.className = "action-btn";
-
   if (!S.account) {
     btn.textContent = "Connect Wallet";
     btn.disabled = false;
@@ -1170,7 +1219,6 @@ function updateSwapBtn() {
     btn.disabled = true;
     return;
   }
-
   if (S.isWrapMode) {
     const isWrapping = S.tIn.isNative;
     btn.textContent = isWrapping
@@ -1180,9 +1228,8 @@ function updateSwapBtn() {
     btn.onclick = doWrapUnwrap;
     return;
   }
-
   const imp = $("priceImpact");
-  if (imp.classList.contains("imp-high")) {
+  if (imp && imp.classList.contains("imp-high")) {
     btn.textContent = `Swap Anyway (High Impact)`;
     btn.className = "action-btn warn";
   } else {
@@ -1191,8 +1238,6 @@ function updateSwapBtn() {
   btn.disabled = false;
   btn.onclick = doSwap;
 }
-
-// ─── WRAP / UNWRAP ───────────────────────────────────────────────────────────
 async function doWrapUnwrap() {
   if (!S.signer) {
     openModal("walletModalWrap");
@@ -1203,13 +1248,11 @@ async function doWrapUnwrap() {
     toast("Switch chain first.", "err");
     return;
   }
-
   const amtStr = $("amountIn").value;
   if (!amtStr || parseFloat(amtStr) <= 0) return;
   const amt = parse(amtStr, 18);
   const isWrapping = S.tIn.isNative;
   const w = wethC(S.signer);
-
   try {
     if (isWrapping) {
       showTx(`Wrap ${CHAIN().symbol}`, "Confirm in wallet");
@@ -1272,8 +1315,6 @@ async function doWrapUnwrap() {
     else toast("Error: " + (e.reason || e.message || "Unknown"), "err");
   }
 }
-
-// ─── EXECUTE SWAP ─────────────────────────────────────────────────────────────
 async function doSwap() {
   if (!S.signer) {
     openModal("walletModalWrap");
@@ -1284,18 +1325,15 @@ async function doSwap() {
     toast("Switch to " + CHAIN().name + " first.", "err");
     return;
   }
-
-  const amtInStr = $("amountIn").value;
-  const amtOutStr = $("amountOut").value;
+  const amtInStr = $("amountIn").value,
+    amtOutStr = $("amountOut").value;
   if (!amtInStr || !amtOutStr) return;
-
-  const amtIn = parse(amtInStr, S.tIn.decimals);
-  const amtOut = parse(amtOutStr, S.tOut.decimals);
-  const minOut = minAmt(amtOut);
-  const dl = ddl();
+  const amtIn = parse(amtInStr, S.tIn.decimals),
+    amtOut = parse(amtOutStr, S.tOut.decimals);
+  const minOut = minAmt(amtOut),
+    dl = ddl();
   const path = [routeAddr(S.tIn), routeAddr(S.tOut)];
   const r = router(S.signer);
-
   try {
     showTx("Preparing Swap…", "Checking allowance");
     if (!S.tIn.isNative) {
@@ -1322,7 +1360,6 @@ async function doSwap() {
       tx = await r.swapExactTokensForETH(amtIn, minOut, path, S.account, dl);
     else
       tx = await r.swapExactTokensForTokens(amtIn, minOut, path, S.account, dl);
-
     showTx("Submitted", "Hash: " + short(tx.hash));
     addTx(
       tx.hash,
@@ -1356,8 +1393,6 @@ async function doSwap() {
     else toast("Swap error: " + (e.reason || e.message || "Unknown"), "err");
   }
 }
-
-// ─── LIQUIDITY UI ─────────────────────────────────────────────────────────────
 function updateLiqUI() {
   const a = S.liqA,
     b = S.liqB;
@@ -1392,7 +1427,6 @@ function updateLiqUI() {
   }
   updateAddLiqBtn();
 }
-
 function setLogo(id, t) {
   const el = $(id);
   if (!el) return;
@@ -1404,7 +1438,6 @@ function setLogo(id, t) {
     el.style.display = "none";
   }
 }
-
 async function checkPoolInfo() {
   if (!S.liqA || !S.liqB) return;
   try {
@@ -1441,7 +1474,6 @@ async function checkPoolInfo() {
     }
   } catch {}
 }
-
 async function onLiqAmtAChange() {
   if (!S.liqA || !S.liqB) return;
   const amtA = $("liqAmtA").value;
@@ -1465,7 +1497,6 @@ async function onLiqAmtAChange() {
   updateAddLiqBtn();
   checkLiqApprovals();
 }
-
 async function checkLiqApprovals() {
   if (!S.account || !S.liqA || !S.liqB) return;
   const amtA = $("liqAmtA").value,
@@ -1491,7 +1522,6 @@ async function checkLiqApprovals() {
   await mkApproveBtn(S.liqA, amtA, S.liqA.symbol);
   await mkApproveBtn(S.liqB, amtB, S.liqB.symbol);
 }
-
 async function approveTok(tok, btn) {
   if (!S.signer) return;
   try {
@@ -1508,7 +1538,6 @@ async function approveTok(tok, btn) {
     else toast("Rejected.", "warn");
   }
 }
-
 function updateAddLiqBtn() {
   const btn = $("addLiqBtn");
   btn.onclick = null;
@@ -1534,7 +1563,6 @@ function updateAddLiqBtn() {
   btn.disabled = false;
   btn.onclick = doAddLiq;
 }
-
 async function doAddLiq() {
   if (!S.signer) {
     openModal("walletModalWrap");
@@ -1613,8 +1641,6 @@ async function doAddLiq() {
     else toast("Error: " + (e.reason || e.message || ""), "err");
   }
 }
-
-// ─── POOL POSITIONS ───────────────────────────────────────────────────────────
 async function loadPositions() {
   if (!S.account) {
     $("poolList").innerHTML =
@@ -1623,7 +1649,6 @@ async function loadPositions() {
   }
   $("poolList").innerHTML =
     '<div class="cyber-card empty-pool"><div class="ep-icon" style="animation:spin 1s linear infinite">◈</div><p>Loading…</p></div>';
-
   const f = factory();
   const prov = readProv();
   const positions = [];
@@ -1633,7 +1658,6 @@ async function loadPositions() {
     (t) =>
       !t.isNative && t.address.toLowerCase() !== CHAIN().WNATIVE.toLowerCase(),
   );
-
   const tryPair = async (tA, tB) => {
     try {
       const pa = await f.getPair(routeAddr(tA), routeAddr(tB));
@@ -1678,16 +1702,13 @@ async function loadPositions() {
       console.warn("tryPair error:", e);
     }
   };
-
   for (const t of erc20Toks) await tryPair(native, t);
   for (let i = 0; i < erc20Toks.length; i++)
     for (let j = i + 1; j < erc20Toks.length; j++)
       await tryPair(erc20Toks[i], erc20Toks[j]);
-
   S.positions = positions;
   renderPositions(positions);
 }
-
 function renderPositions(pos) {
   const el = $("poolList");
   if (!pos.length) {
@@ -1700,26 +1721,10 @@ function renderPositions(pos) {
     const d = document.createElement("div");
     d.className = "pool-pos";
     const sh = (p.sh.toNumber() / 100).toFixed(4);
-    d.innerHTML = `
-      <div class="pos-hd">
-        <span class="pos-pair">${p.tA.symbol}/${p.tB.symbol}</span>
-        <div class="pos-acts">
-          <button class="pos-add" onclick="goAddLiq(${i})">Add</button>
-          <button class="pos-rm"  onclick="openRemove(${i})">Remove</button>
-        </div>
-      </div>
-      <div class="pos-data">
-        <div class="pos-row"><span>Your ${p.tA.symbol}</span><span class="mono">${fmt(p.myA, p.tA.decimals, 6)}</span></div>
-        <div class="pos-row"><span>Your ${p.tB.symbol}</span><span class="mono">${fmt(p.myB, p.tB.decimals, 6)}</span></div>
-        <div class="pos-row"><span>Pool Share</span><span class="mono">${sh}%</span></div>
-        <div class="pos-row"><span>LP Tokens</span><span class="mono">${fmt(p.lpBal, 18, 8)}</span></div>
-        <div class="pos-row"><span>Pair</span><span class="mono"><a href="${CHAIN().explorer}address/${p.pa}" target="_blank" style="color:var(--cyan);text-decoration:none">${short(p.pa)} ↗</a></span></div>
-      </div>
-    `;
+    d.innerHTML = `<div class="pos-hd"><span class="pos-pair">${p.tA.symbol}/${p.tB.symbol}</span><div class="pos-acts"><button class="pos-add" onclick="goAddLiq(${i})">Add</button><button class="pos-rm"  onclick="openRemove(${i})">Remove</button></div></div><div class="pos-data"><div class="pos-row"><span>Your ${p.tA.symbol}</span><span class="mono">${fmt(p.myA, p.tA.decimals, 6)}</span></div><div class="pos-row"><span>Your ${p.tB.symbol}</span><span class="mono">${fmt(p.myB, p.tB.decimals, 6)}</span></div><div class="pos-row"><span>Pool Share</span><span class="mono">${sh}%</span></div><div class="pos-row"><span>LP Tokens</span><span class="mono">${fmt(p.lpBal, 18, 8)}</span></div><div class="pos-row"><span>Pair</span><span class="mono"><a href="${CHAIN().explorer}address/${p.pa}" target="_blank" style="color:var(--cyan);text-decoration:none">${short(p.pa)} ↗</a></span></div></div>`;
     el.appendChild(d);
   });
 }
-
 window.goAddLiq = (i) => {
   const p = S.positions[i];
   if (!p) return;
@@ -1728,7 +1733,6 @@ window.goAddLiq = (i) => {
   navTo("liquidity");
   setTimeout(updateLiqUI, 50);
 };
-
 window.openRemove = (i) => {
   S.currentPos = i;
   const p = S.positions[i];
@@ -1738,7 +1742,6 @@ window.openRemove = (i) => {
   updateRemoveOutput(50);
   openModal("removeMWrap");
 };
-
 function updateRemoveOutput(pct) {
   S.removePct = pct;
   const p = S.positions[S.currentPos];
@@ -1754,7 +1757,6 @@ function updateRemoveOutput(pct) {
     btn.onclick = () => doRemoveLiq(pct);
   }
 }
-
 async function approveLP() {
   const p = S.positions[S.currentPos];
   if (!p || !S.signer) return;
@@ -1772,7 +1774,6 @@ async function approveLP() {
     toast("LP approval failed.", "err");
   }
 }
-
 async function doRemoveLiq(pct) {
   const p = S.positions[S.currentPos];
   if (!p || !S.signer) return;
@@ -1832,8 +1833,6 @@ async function doRemoveLiq(pct) {
     else toast("Error: " + (e.reason || e.message || ""), "err");
   }
 }
-
-// ─── IMPORT POOL ─────────────────────────────────────────────────────────────
 async function checkImport() {
   if (!S.importA || !S.importB) return;
   const d = $("importDetails"),
@@ -1865,21 +1864,13 @@ async function checkImport() {
           myLP = fmt(await pr.balanceOf(S.account), 18, 8);
         } catch {}
       }
-      d.innerHTML = `
-        <div class="detail-row"><span>Address</span><span><a href="${CHAIN().explorer}address/${pa}" target="_blank" style="color:var(--cyan);text-decoration:none">${short(pa)} ↗</a></span></div>
-        <div class="detail-row"><span>${escHtml(S.importA.symbol)} Reserve</span><span>${fmt(rA, S.importA.decimals, 4)}</span></div>
-        <div class="detail-row"><span>${escHtml(S.importB.symbol)} Reserve</span><span>${fmt(rB, S.importB.decimals, 4)}</span></div>
-        <div class="detail-row"><span>Total LP Supply</span><span>${fmt(ts, 18, 4)}</span></div>
-        <div class="detail-row"><span>Your LP Balance</span><span>${myLP}</span></div>
-      `;
+      d.innerHTML = `<div class="detail-row"><span>Address</span><span><a href="${CHAIN().explorer}address/${pa}" target="_blank" style="color:var(--cyan);text-decoration:none">${short(pa)} ↗</a></span></div><div class="detail-row"><span>${escHtml(S.importA.symbol)} Reserve</span><span>${fmt(rA, S.importA.decimals, 4)}</span></div><div class="detail-row"><span>${escHtml(S.importB.symbol)} Reserve</span><span>${fmt(rB, S.importB.decimals, 4)}</span></div><div class="detail-row"><span>Total LP Supply</span><span>${fmt(ts, 18, 4)}</span></div><div class="detail-row"><span>Your LP Balance</span><span>${myLP}</span></div>`;
       btn.disabled = false;
     }
   } catch (e) {
     d.innerHTML = `<div class="detail-row" style="color:var(--red)"><span>Error: ${escHtml(e.reason || e.message || "Unknown")}</span></div>`;
   }
 }
-
-// ─── TRANSACTIONS ──────────────────────────────────────────────────────────────
 function addTx(h, l, s) {
   S.txns.unshift({ h, l, s, t: Date.now() });
   if (S.txns.length > 8) S.txns.pop();
@@ -1911,8 +1902,6 @@ function renderTxns() {
     el.appendChild(d);
   });
 }
-
-// ─── CUSTOM TOKEN ─────────────────────────────────────────────────────────────
 async function fetchCustomPreview(addr) {
   if (!addr.startsWith("0x") || addr.length !== 42) {
     $("customPreview").classList.add("hidden");
@@ -1943,11 +1932,10 @@ async function fetchCustomPreview(addr) {
     return null;
   }
 }
-
 function renderCustomToks() {
   const el = $("customTokList");
   const chainToks = S.customTokens.filter(
-    (t) => (t.chainKey || "riche") === S.activeChainKey,
+    (t) => (t.chainKey || "bsc") === S.activeChainKey,
   );
   if (!chainToks.length) {
     el.innerHTML = '<p class="empty-msg">None added</p>';
@@ -1958,11 +1946,7 @@ function renderCustomToks() {
     const globalIdx = S.customTokens.indexOf(t);
     const d = document.createElement("div");
     d.className = "tok-item";
-    d.innerHTML = `
-      <div class="tok-ico">${t.symbol.slice(0, 2)}</div>
-      <div class="tok-inf"><div class="tok-sym">${t.symbol}</div><div class="tok-name">${t.name}</div></div>
-      <button class="del-tok" data-i="${globalIdx}" title="Remove">✕</button>
-    `;
+    d.innerHTML = `<div class="tok-ico">${t.symbol.slice(0, 2)}</div><div class="tok-inf"><div class="tok-sym">${t.symbol}</div><div class="tok-name">${t.name}</div></div><button class="del-tok" data-i="${globalIdx}" title="Remove">✕</button>`;
     d.querySelector(".del-tok").addEventListener("click", (e) => {
       const idx = parseInt(e.target.dataset.i);
       const removed = S.customTokens.splice(idx, 1)[0];
@@ -1976,6 +1960,27 @@ function renderCustomToks() {
     el.appendChild(d);
   });
 }
+async function checkCurrentChainStatus() {
+  if (!window.ethereum) {
+    console.log("❌ No wallet detected");
+    return null;
+  }
+  try {
+    const chainIdHex = await window.ethereum.request({ method: "eth_chainId" });
+    const chainId = parseInt(chainIdHex, 16);
+    const matchedChain = Object.values(CHAINS).find((ch) => ch.id === chainId);
+    console.log("📊 Chain Status:");
+    console.log("  - Hex ID:", chainIdHex);
+    console.log("  - Decimal ID:", chainId);
+    console.log("  - Matched:", matchedChain ? matchedChain.name : "Unknown");
+    console.log("  - Active in App:", CHAIN().name);
+    return { chainIdHex, chainId, matchedChain };
+  } catch (error) {
+    console.error("Failed to check chain:", error);
+    return null;
+  }
+}
+window.debugChain = checkCurrentChainStatus;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1984,12 +1989,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   initChainUI();
   renderTxns();
   renderCustomToks();
-
-  // Load remote token list async
   loadTokenList().then(() => {
-    // After list loaded, also append custom tokens that weren't yet in list
     S.customTokens
-      .filter((t) => (t.chainKey || "riche") === S.activeChainKey)
+      .filter((t) => (t.chainKey || "bsc") === S.activeChainKey)
       .forEach((t) => {
         const a = t.address.toLowerCase();
         if (!S.allTokens.find((x) => x.address.toLowerCase() === a))
@@ -1998,23 +2000,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     if ($("tokModalWrap").classList.contains("open"))
       renderTokList($("tokSearch").value);
   });
-
-  // ── CHAIN DROPDOWN TOGGLE ──
-  const chainTriggerBtn = $("chainTriggerBtn");
-  const chainDropdown = $("chainDropdown");
+  const chainTriggerBtn = $("chainTriggerBtn"),
+    chainDropdown = $("chainDropdown");
   if (chainTriggerBtn && chainDropdown) {
     chainTriggerBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       chainDropdown.classList.toggle("open");
     });
     document.addEventListener("click", (e) => {
-      if (!$("chainDropdownWrap").contains(e.target)) {
+      if ($("chainDropdownWrap") && !$("chainDropdownWrap").contains(e.target))
         chainDropdown.classList.remove("open");
-      }
     });
   }
-
-  // ── NAV ──
   document
     .querySelectorAll(".nav-link[data-page],.mob-link[data-page]")
     .forEach((el) => {
@@ -2023,16 +2020,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         closeMobMenu();
       });
     });
-
-  // ── HAMBURGER ──
   $("burgerBtn").addEventListener("click", () => {
     const open = $("mobMenu").classList.toggle("open");
     $("mobOverlay").classList.toggle("show", open);
     $("burgerBtn").classList.toggle("open", open);
   });
   $("mobOverlay").addEventListener("click", closeMobMenu);
-
-  // ── WALLET ──
   $("walletBtn").addEventListener("click", () => {
     if (S.account) openModal("wdWrap");
     else openModal("walletModalWrap");
@@ -2045,8 +2038,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   );
   $("closeWdModal").addEventListener("click", () => closeModal("wdWrap"));
   $("disconnectBtn").addEventListener("click", disconnectWallet);
-
-  // ── TOKEN MODAL ──
   $("closeTokModal").addEventListener("click", closeTokModal);
   $("tokSearch").addEventListener("input", (e) => {
     const v = e.target.value;
@@ -2063,8 +2054,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderCustomToks();
     openModal("manageMWrap");
   });
-
-  // ── SWAP ──
   $("pickIn").addEventListener("click", () => openTokModal("in"));
   $("pickOut").addEventListener("click", () => openTokModal("out"));
   $("flipBtn").addEventListener("click", () => {
@@ -2103,8 +2092,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("settingsBtn").addEventListener("click", () =>
     $("settPanel").classList.toggle("open"),
   );
-
-  // Slippage
   document.querySelectorAll(".slip-b[data-s]").forEach((b) => {
     b.addEventListener("click", () => {
       document
@@ -2136,8 +2123,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     save("txns", S.txns);
     renderTxns();
   });
-
-  // ── LIQUIDITY ──
   $("liqPickA").addEventListener("click", () => openTokModal("liqA"));
   $("liqPickB").addEventListener("click", () => openTokModal("liqB"));
   $("liqPickA2").addEventListener("click", () => openTokModal("liqA"));
@@ -2178,8 +2163,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("liqAmtB").value = fmt(b, S.liqB.decimals, 8);
     updateAddLiqBtn();
   });
-
-  // ── POOL ──
   $("goAddLiqBtn").addEventListener("click", () => navTo("liquidity"));
   $("refreshPoolBtn").addEventListener("click", () => {
     $("refreshPoolBtn").classList.add("spin");
@@ -2188,8 +2171,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   });
   $("importPoolBtn").addEventListener("click", () => openModal("importMWrap"));
-
-  // ── REMOVE LIQ ──
   $("closeRemoveM").addEventListener("click", () => closeModal("removeMWrap"));
   $("rmSlider").addEventListener("input", (e) =>
     updateRemoveOutput(parseInt(e.target.value)),
@@ -2202,8 +2183,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
   $("approveLPBtn").addEventListener("click", approveLP);
-
-  // ── IMPORT POOL ──
   $("closeImportM").addEventListener("click", () => closeModal("importMWrap"));
   $("importPickA").addEventListener("click", () => openTokModal("importA"));
   $("importPickB").addEventListener("click", () => openTokModal("importB"));
@@ -2214,8 +2193,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadPositions();
     }
   });
-
-  // ── MANAGE TOKENS ──
   $("closeManageM").addEventListener("click", () => closeModal("manageMWrap"));
   let customTimer;
   $("customAddr").addEventListener("input", (e) => {
@@ -2241,7 +2218,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       S.customTokens.find(
         (x) =>
           x.address.toLowerCase() === addr.toLowerCase() &&
-          (x.chainKey || "riche") === S.activeChainKey,
+          (x.chainKey || "bsc") === S.activeChainKey,
       )
     ) {
       toast("Already added.", "warn");
@@ -2261,8 +2238,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("customPreview").classList.add("hidden");
     renderCustomToks();
   });
-
-  // ── CLOSE MODALS ON BG ──
   document.querySelectorAll(".modal-wrap").forEach((w) => {
     w.addEventListener("click", (e) => {
       if (e.target === w) {
@@ -2271,8 +2246,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   });
-
-  // ── METAMASK EVENTS ──
   if (window.ethereum) {
     window.ethereum.on("accountsChanged", (accs) => {
       if (!accs.length) disconnectWallet();
@@ -2283,7 +2256,36 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadPositions();
       }
     });
-    window.ethereum.on("chainChanged", () => window.location.reload());
+    window.ethereum.on("chainChanged", async (chainIdHex) => {
+      console.log("🔗 MetaMask chain changed:", chainIdHex);
+      const matchedKey = Object.keys(CHAINS).find((k) => {
+        const ch = CHAINS[k];
+        const targetHex = ch.hex.toLowerCase();
+        return targetHex === chainIdHex.toLowerCase();
+      });
+      if (matchedKey && matchedKey !== S.activeChainKey) {
+        console.log(`🔄 Syncing UI to chain: ${matchedKey}`);
+        S.activeChainKey = matchedKey;
+        save("chainKey", matchedKey);
+        resetChainDependentState();
+        await reinitializeAfterChainSwitch();
+        if (S.account) {
+          S.provider = new ethers.providers.Web3Provider(window.ethereum);
+          S.signer = S.provider.getSigner();
+          S.chainOk = true;
+          await refreshBals();
+          await loadPositions();
+          await updateWdBal();
+        }
+        toast(`Wallet beralih ke ${CHAIN().name}`, "info");
+      } else if (!matchedKey) {
+        console.warn("Unknown chain detected:", chainIdHex);
+        toast(
+          `Chain ID ${chainIdHex} tidak didukung. Silakan ganti ke chain yang tersedia.`,
+          "warn",
+        );
+      }
+    });
     window.ethereum
       .request({ method: "eth_accounts" })
       .then((accs) => {
@@ -2291,10 +2293,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       })
       .catch(() => {});
   }
-
-  // ── URL PARAMS (after init) ──
   applyUrlParams();
-
   console.log(
     "🚀 RecehDEX ready | Chain:",
     CHAIN().name,
