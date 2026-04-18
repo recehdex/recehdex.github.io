@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>RecehDEX</title>
+  <script>
+    var path = window.location.pathname;
+    var search = window.location.search;
+    var hash = window.location.hash;
+
+    localStorage.setItem('redirectPath', path);
+    localStorage.setItem('redirectSearch', search);
+    localStorage.setItem('redirectHash', hash);
+    
+    window.location.replace('/');
+  </script>
+</head>
+<body>
+  <div style="text-align:center;padding:50px;font-family:sans-serif">
+    <h2>Loading RecehDEX...</h2>
+    <p>Please wait, redirecting...</p>
+  </div>
+</body>
+</html>
