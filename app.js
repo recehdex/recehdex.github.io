@@ -1,23 +1,43 @@
-(function() {
+"use strict";
 
-  var savedPath = sessionStorage.getItem('originalPath');
-  var currentPath = window.location.pathname;
+(function() {
+  var savedPath = localStorage.getItem('redirectPath');
+  var savedSearch = localStorage.getItem('redirectSearch');
+  var savedHash = localStorage.getItem('redirectHash');
   
-  var validPaths = ['/', '/index.html'];
-  
-  if (savedPath && savedPath !== '/' && !validPaths.includes(currentPath)) {
-    
+  if (savedPath && savedPath !== '/' && savedPath !== '/index.html') {
     window.__originalPath = savedPath;
-    sessionStorage.removeItem('originalPath');
-  } else if (currentPath !== '/' && !validPaths.includes(currentPath)) {
-    
-    sessionStorage.setItem('originalPath', currentPath);
-    window.location.replace('/');
-    return;
+    window.__originalSearch = savedSearch || '';
+    window.__originalHash = savedHash || '';
+    localStorage.removeItem('redirectPath');
+    localStorage.removeItem('redirectSearch');
+    localStorage.removeItem('redirectHash');
   }
 })();
 
-"use strict";
+function getChainFromPath() {
+  var originalPath = window.__originalPath || window.location.pathname;
+  var path = originalPath.toLowerCase().replace(/^\/|\/$/g, '');
+  if (path === "bsc" || path.startsWith("bsc/")) return "bsc";
+  if (path === "riche" || path.startsWith("riche/")) return "riche";
+  return null;
+}
+
+function getCurrentPageFromUrl() {
+  var originalPath = window.__originalPath || window.location.pathname;
+  var parts = originalPath.toLowerCase().replace(/^\/|\/$/g, '').split('/');
+  if (parts.length >= 2 && ["swap", "liquidity", "pool"].includes(parts[1])) {
+    return parts[1];
+  }
+  return null;
+}
+
+function restoreOriginalPath() {
+  if (window.__originalPath) {
+    window.history.replaceState({}, '', window.__originalPath + 
+      (window.__originalSearch || '') + (window.__originalHash || ''));
+  }
+}
 
 const CHAINS = {
   bsc: {
@@ -2161,6 +2181,7 @@ window.debugChain = checkCurrentChainStatus;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
+ restoreOriginalPath();
   const pathname = window.location.pathname;
   if (pathname === "/" || pathname === "") {
     window.location.replace(
