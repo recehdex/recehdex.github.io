@@ -205,20 +205,27 @@ function updateUrlForChain(chainKey, preserveParams = true) {
   var currentParams = new URLSearchParams(window.location.search);
   var currentPage = getCurrentPageFromUI();
   
+  // Bangun path baru
   var newPath = '/' + chainKey;
   if (currentPage && currentPage !== "swap") {
     newPath += '/' + currentPage;
   }
   
-  var newUrl = newPath;
+  var queryString = '';
   if (preserveParams && currentParams.toString()) {
-    newUrl += "?" + currentParams.toString();
+    queryString = '?' + currentParams.toString();
   }
   
-  newUrl += window.location.hash;
+  var newUrl = newPath + queryString + window.location.hash;
   
-  if (window.location.pathname + window.location.search !== newPath + (preserveParams ? "?" + currentParams.toString() : "")) {
+  var currentFullPath = window.location.pathname + window.location.search;
+  var newFullPath = newPath + queryString;
+  
+  if (currentFullPath !== newFullPath) {
+    console.log('🔄 Updating URL from', currentFullPath, 'to', newFullPath);
     window.history.pushState({ chainKey: chainKey, page: currentPage }, "", newUrl);
+  } else {
+    console.log('⚠️ URL already correct, no update needed');
   }
 }
 
