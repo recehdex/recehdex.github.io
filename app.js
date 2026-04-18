@@ -77,6 +77,322 @@ const S = {
   isSwitchingChain: false,
 };
 
+// ─── URL ROUTING ─────────────────────────────────────────────────────────────
+function getChainFromPath() {
+  const path = window.location.pathname.toLowerCase();
+  if (path === "/bsc" || path.startsWith("/bsc/")) return "bsc";
+  if (path === "/riche" || path.startsWith("/riche/")) return "riche";
+  return null;
+}
+
+function updateUrlForChain(chainKey, preserveParams = true) {
+  const currentParams = new URLSearchParams(window.location.search);
+  const currentPage = getCurrentPageFromUrl() || getCurrentPageFromUI();
+
+  let newPath = `/${chainKey}`;
+  if (currentPage && currentPage !== "swap") {
+    newPath += `/${currentPage}`;
+  }
+
+  let newUrl = newPath;
+  if (preserveParams && currentParams.toString()) {
+    newUrl += "?" + currentParams.toString();
+  }
+
+  const newFullUrl = newUrl + window.location.hash;
+  if (
+    window.location.pathname + window.location.search !==
+    newPath + (preserveParams ? "?" + currentParams.toString() : "")
+  ) {
+    window.history.pushState({ chainKey, page: currentPage }, "", newFullUrl);
+  }
+}
+
+function getCurrentPageFromUrl() {
+  const pathParts = window.location.pathname.split("/").filter((p) => p);
+  if (pathParts.length >= 2) {
+    const page = pathParts[1];
+    if (["swap", "liquidity", "pool"].includes(page)) return page;
+  }
+  return null;
+}
+
+function getCurrentPageFromUI() {
+  const activePage = document.querySelector(".page.active");
+  if (activePage) {
+    const id = activePage.id;
+    if (id === "page-swap") return "swap";
+    if (id === "page-liquidity") return "liquidity";
+    if (id === "page-pool") return "pool";
+  }
+  return "swap";
+}
+
+function updatePageUrlFromUI() {
+  const currentPage = getCurrentPageFromUI();
+  const chainKey = S.activeChainKey;
+  const currentParams = new URLSearchParams(window.location.search);
+
+  let newPath = `/${chainKey}`;
+  if (currentPage !== "swap") {
+    newPath += `/${currentPage}`;
+  }
+
+  let newUrl = newPath;
+  if (currentParams.toString()) {
+    newUrl += "?" + currentParams.toString();
+  }
+
+  window.history.pushState({ chainKey, page: currentPage }, "", newUrl);
+}
+
+// ─── INITIALIZE FROM URL PATH ────────────────────────────────────────────────
+async function initializeFromUrlPath() {
+  const pathChain = getChainFromPath();
+  const savedChain = load("chainKey", "bsc");
+  const urlPage = getCurrentPageFromUrl();
+
+  let targetChain = pathChain;
+  if (!targetChain) {
+    targetChain = savedChain;
+    const newPath = `/${targetChain}` + (urlPage ? `/${urlPage}` : "");
+    window.location.replace(
+      newPath + window.location.search + window.location.hash,
+    );
+    return false;
+  }
+
+  if (targetChain !== S.activeChainKey) {
+    S.activeChainKey = targetChain;
+    save("chainKey", targetChain);
+    resetChainDependentState();
+    await reinitializeAfterChainSwitch();
+  }
+
+  if (urlPage && urlPage !== getCurrentPageFromUI()) {
+    navTo(urlPage);
+  }
+
+  return true;
+}
+
+// ─── switchActiveChain ──────────────────────
+async function switchActiveChain(key, preserveParams = true) {
+  if (key === S.activeChainKey) {
+    console.log("Sudah di chain yang sama");
+    return;
+  }
+  if (S.isSwitchingChain) {
+    toast("Sedang beralih jaringan, tunggu sebentar...", "warn");
+    return;
+  }
+
+  const newChain = getChainByKey(key);
+  if (!newChain) {
+    toast(`Chain ${key} tidak tersedia`, "err");
+    return;
+  }
+
+  S.isSwitchingChain = true;
+  toast(`⏳ Beralih ke ${newChain.name}...`, "info", 5000);
+
+  // FIRST: Switch wallet
+  if (S.account && window.ethereum) {
+    const switched = await requestWalletChainSwitch(key);
+    if (!switched) {
+      S.isSwitchingChain = false;
+      toast(`❌ Gagal beralih ke ${newChain.name}`, "err");
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+
+  // SECOND: Update state
+  const oldChainKey = S.activeChainKey;
+  S.activeChainKey = key;
+  save("chainKey", key);
+  resetChainDependentState();
+  await reinitializeAfterChainSwitch();
+
+  // THIRD: Update URL (setelah switch berhasil)
+  updateUrlForChain(key, preserveParams);
+
+  if (S.account && window.ethereum) {
+    await refreshWalletAfterChainSwitch();
+  }
+
+  S.isSwitchingChain = false;
+  toast(`✅ Berhasil beralih ke ${CHAIN().name}`, "ok");
+  console.log(`✨ Chain switched: ${oldChainKey} → ${key}`);
+}
+
+// ─── navTo ──────────────────────────────────
+function navTo(page) {
+  document
+    .querySelectorAll(".page")
+    .forEach((p) => p.classList.remove("active"));
+  document.querySelectorAll(".nav-link,.mob-link").forEach((l) => {
+    l.classList.toggle("active", l.dataset.page === page);
+  });
+  const pg = $("page-" + page);
+  if (pg) pg.classList.add("active");
+  if (page === "pool") loadPositions();
+
+  updatePageUrlFromUI();
+}
+
+// ─── applyUrlParams ───────────────────
+async function applyUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const inputCurrency = params.get("inputCurrency"),
+    outputCurrency = params.get("outputCurrency"),
+    page = params.get("page");
+
+  if (page && ["swap", "liquidity", "pool"].includes(page)) {
+    navTo(page);
+  }
+
+  if (inputCurrency || outputCurrency) {
+    await new Promise((r) => setTimeout(r, 800));
+    if (inputCurrency) {
+      const t = resolveUrlToken(inputCurrency);
+      if (t) {
+        S.tIn = t;
+        updateInUI();
+      }
+    }
+    if (outputCurrency) {
+      const t = resolveUrlToken(outputCurrency);
+      if (t) {
+        S.tOut = t;
+        updateOutUI();
+      }
+    }
+    if (S.tIn && S.tOut && S.tIn.address === S.tOut.address) {
+      S.tOut = null;
+      updateOutUI();
+    }
+    refreshBals();
+  }
+}
+
+function updateTokenParamsInUrl() {
+  const params = new URLSearchParams();
+  if (S.tIn && !S.tIn.isNative) {
+    params.set("inputCurrency", S.tIn.address);
+  } else if (S.tIn && S.tIn.isNative) {
+    params.set("inputCurrency", CHAIN().symbol.toLowerCase());
+  }
+  if (S.tOut && !S.tOut.isNative) {
+    params.set("outputCurrency", S.tOut.address);
+  } else if (S.tOut && S.tOut.isNative) {
+    params.set("outputCurrency", CHAIN().symbol.toLowerCase());
+  }
+
+  const currentPage = getCurrentPageFromUI();
+  let newPath = `/${S.activeChainKey}`;
+  if (currentPage !== "swap") {
+    newPath += `/${currentPage}`;
+  }
+
+  const paramStr = params.toString();
+  const newUrl = newPath + (paramStr ? "?" + paramStr : "");
+  window.history.pushState(
+    { chainKey: S.activeChainKey, page: currentPage },
+    "",
+    newUrl,
+  );
+}
+
+function resolveUrlToken(value) {
+  if (!value) return null;
+  const lower = value.toLowerCase();
+  const nativeSymbols = ["native", "eth", "bnb", "ric"];
+  if (nativeSymbols.includes(lower)) {
+    return makeNativeToken(S.activeChainKey);
+  }
+  const all = allToks();
+  const found = all.find((t) => t.address.toLowerCase() === lower);
+  if (found) return found;
+  if (value.startsWith("0x") && value.length === 42) {
+    fetchAndSetUrlToken(value);
+    return null;
+  }
+  return null;
+}
+
+// selectTok
+function selectTok(t) {
+  const ctx = S.modalCtx;
+  if (!ctx) return;
+  closeTokModal();
+  if (ctx === "in") {
+    if (S.tOut && S.tOut.address === t.address) {
+      S.tOut = S.tIn;
+      updateOutUI();
+    }
+    S.tIn = t;
+    updateInUI();
+  } else if (ctx === "out") {
+    if (S.tIn && S.tIn.address === t.address) {
+      S.tIn = S.tOut;
+      updateInUI();
+    }
+    S.tOut = t;
+    updateOutUI();
+  } else if (ctx === "liqA") {
+    S.liqA = t;
+    updateLiqUI();
+  } else if (ctx === "liqB") {
+    S.liqB = t;
+    updateLiqUI();
+  } else if (ctx === "importA") {
+    S.importA = t;
+    const el = $("importSymA");
+    if (el) el.textContent = t.symbol;
+    const lg = $("importLogoA");
+    if (lg) {
+      if (t.logoURI) {
+        lg.src = t.logoURI;
+        lg.style.display = "";
+      } else lg.style.display = "none";
+    }
+    checkImport();
+  } else if (ctx === "importB") {
+    S.importB = t;
+    const el = $("importSymB");
+    if (el) el.textContent = t.symbol;
+    const lg = $("importLogoB");
+    if (lg) {
+      if (t.logoURI) {
+        lg.src = t.logoURI;
+        lg.style.display = "";
+      } else lg.style.display = "none";
+    }
+    checkImport();
+  }
+  refreshBals();
+  updateTokenParamsInUrl();
+}
+
+// updateInUI
+function updateInUI() {
+  setTokUI("logoIn", "symIn", S.tIn);
+  detectWrapMode();
+  getQuote();
+  updateSwapBtn();
+  updateTokenParamsInUrl();
+}
+
+// updateOutUI
+function updateOutUI() {
+  setTokUI("logoOut", "symOut", S.tOut);
+  detectWrapMode();
+  getQuote();
+  updateSwapBtn();
+  updateTokenParamsInUrl();
+}
+
 // ─── PERSIST ─────────────────────────────────────────────────────────────────
 function load(k, def) {
   try {
@@ -339,39 +655,6 @@ function initCanvas() {
   draw();
 }
 
-// ─── CHAIN SELECTOR ──────────────────────────────────────────────────────────
-function initChainUI() {
-  const makeItems = (containerId, closeFn) => {
-    const wrap = $(containerId);
-    if (!wrap) return;
-    wrap.innerHTML = "";
-    Object.keys(CHAINS).forEach((key) => {
-      const ch = CHAINS[key];
-      const btn = document.createElement("button");
-      btn.className =
-        "chain-item-btn" + (key === S.activeChainKey ? " active" : "");
-      btn.dataset.chainKey = key;
-      btn.style.setProperty("--chain-color", ch.color);
-      const logoHtml = `<img class="ci-logo-img" src="${ch.logo}" alt="${ch.shortName}" onerror="this.style.opacity='.4'" />`;
-      btn.innerHTML =
-        logoHtml +
-        '<span class="ci-name">' +
-        ch.shortName +
-        "</span>" +
-        (key === S.activeChainKey
-          ? '<span class="ci-check">&#10003;</span>'
-          : "");
-      btn.addEventListener("click", () => {
-        switchActiveChain(key);
-        if (closeFn) closeFn();
-      });
-      wrap.appendChild(btn);
-    });
-  };
-  makeItems("chainSelector", closeChainDropdown);
-  makeItems("chainSelectorMob", closeMobMenu);
-  updateChainPill();
-}
 function closeChainDropdown() {
   const dd = $("chainDropdown");
   if (dd) dd.classList.remove("open");
@@ -399,6 +682,40 @@ function updateChainPill() {
   const wdNet = $("wdNet");
   if (wdNet) wdNet.textContent = `${ch.name} · ID ${ch.id}`;
   if ($("wdBal") && S.account) updateWdBal();
+}
+
+// ─── initChainUI ───────────────────────────
+function initChainUI() {
+  const makeItems = (containerId, closeFn) => {
+    const wrap = $(containerId);
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    Object.keys(CHAINS).forEach((key) => {
+      const ch = CHAINS[key];
+      const btn = document.createElement("button");
+      btn.className =
+        "chain-item-btn" + (key === S.activeChainKey ? " active" : "");
+      btn.dataset.chainKey = key;
+      btn.style.setProperty("--chain-color", ch.color);
+      const logoHtml = `<img class="ci-logo-img" src="${ch.logo}" alt="${ch.shortName}" onerror="this.style.opacity='.4'" />`;
+      btn.innerHTML =
+        logoHtml +
+        '<span class="ci-name">' +
+        ch.shortName +
+        "</span>" +
+        (key === S.activeChainKey
+          ? '<span class="ci-check">&#10003;</span>'
+          : "");
+      btn.addEventListener("click", async () => {
+        await switchActiveChain(key, true);
+        if (closeFn) closeFn();
+      });
+      wrap.appendChild(btn);
+    });
+  };
+  makeItems("chainSelector", closeChainDropdown);
+  makeItems("chainSelectorMob", closeMobMenu);
+  updateChainPill();
 }
 
 // ─── REQUEST SWITCH CHAIN (FIXED) ───────────────────────────────────────────
@@ -562,45 +879,6 @@ async function refreshWalletAfterChainSwitch() {
   }
 }
 
-// ─── SWITCH ACTIVE CHAIN ────────────────────────────────────────────────────
-async function switchActiveChain(key) {
-  if (key === S.activeChainKey) {
-    console.log("Sudah di chain yang sama");
-    return;
-  }
-  if (S.isSwitchingChain) {
-    toast("Sedang beralih jaringan, tunggu sebentar...", "warn");
-    return;
-  }
-  const newChain = getChainByKey(key);
-  if (!newChain) {
-    toast(`Chain ${key} tidak tersedia`, "err");
-    return;
-  }
-  S.isSwitchingChain = true;
-  toast(`⏳ Beralih ke ${newChain.name}...`, "info", 5000);
-  if (S.account && window.ethereum) {
-    const switched = await requestWalletChainSwitch(key);
-    if (!switched) {
-      S.isSwitchingChain = false;
-      toast(`❌ Gagal beralih ke ${newChain.name}`, "err");
-      return;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-  }
-  const oldChainKey = S.activeChainKey;
-  S.activeChainKey = key;
-  save("chainKey", key);
-  resetChainDependentState();
-  await reinitializeAfterChainSwitch();
-  if (S.account && window.ethereum) {
-    await refreshWalletAfterChainSwitch();
-  }
-  S.isSwitchingChain = false;
-  toast(`✅ Berhasil beralih ke ${CHAIN().name}`, "ok");
-  console.log(`✨ Chain switched: ${oldChainKey} → ${key}`);
-}
-
 // ─── BASE TOKEN INIT ─────────────────────────────────────────────────────────
 function initBaseTokens() {
   const key = S.activeChainKey;
@@ -666,53 +944,6 @@ async function loadTokenList() {
     renderTokList($("tokSearch").value);
 }
 
-// ─── URL PARAMETERS ──────────────────────────────────────────────────────────
-async function applyUrlParams() {
-  const params = new URLSearchParams(window.location.search);
-  const inputCurrency = params.get("inputCurrency"),
-    outputCurrency = params.get("outputCurrency"),
-    page = params.get("page");
-  if (page && ["swap", "liquidity", "pool"].includes(page)) navTo(page);
-  if (inputCurrency || outputCurrency) {
-    await new Promise((r) => setTimeout(r, 800));
-    if (inputCurrency) {
-      const t = resolveUrlToken(inputCurrency);
-      if (t) {
-        S.tIn = t;
-        updateInUI();
-      }
-    }
-    if (outputCurrency) {
-      const t = resolveUrlToken(outputCurrency);
-      if (t) {
-        S.tOut = t;
-        updateOutUI();
-      }
-    }
-    if (S.tIn && S.tOut && S.tIn.address === S.tOut.address) {
-      S.tOut = null;
-      updateOutUI();
-    }
-    refreshBals();
-  }
-}
-function resolveUrlToken(value) {
-  if (!value) return null;
-  const lower = value.toLowerCase();
-  if (
-    lower === "native" ||
-    lower === "eth" ||
-    lower === "bnb" ||
-    lower === "ric"
-  )
-    return makeNativeToken(S.activeChainKey);
-  const all = allToks();
-  const found = all.find((t) => t.address.toLowerCase() === lower);
-  if (found) return found;
-  if (value.startsWith("0x") && value.length === 42)
-    fetchAndSetUrlToken(value, "pending_out");
-  return null;
-}
 async function fetchAndSetUrlToken(addr) {
   try {
     const c = erc20(addr);
@@ -850,18 +1081,6 @@ async function updateWdBal() {
   } catch {}
 }
 
-// ─── NAVIGATION ──────────────────────────────────────────────────────────────
-function navTo(page) {
-  document
-    .querySelectorAll(".page")
-    .forEach((p) => p.classList.remove("active"));
-  document.querySelectorAll(".nav-link,.mob-link").forEach((l) => {
-    l.classList.toggle("active", l.dataset.page === page);
-  });
-  const pg = $("page-" + page);
-  if (pg) pg.classList.add("active");
-  if (page === "pool") loadPositions();
-}
 function closeMobMenu() {
   $("mobMenu").classList.remove("open");
   $("mobOverlay").classList.remove("show");
@@ -990,57 +1209,7 @@ async function fetchAddrToken(addr) {
     console.warn("fetchAddrToken failed:", e);
   }
 }
-function selectTok(t) {
-  const ctx = S.modalCtx;
-  if (!ctx) return;
-  closeTokModal();
-  if (ctx === "in") {
-    if (S.tOut && S.tOut.address === t.address) {
-      S.tOut = S.tIn;
-      updateOutUI();
-    }
-    S.tIn = t;
-    updateInUI();
-  } else if (ctx === "out") {
-    if (S.tIn && S.tIn.address === t.address) {
-      S.tIn = S.tOut;
-      updateInUI();
-    }
-    S.tOut = t;
-    updateOutUI();
-  } else if (ctx === "liqA") {
-    S.liqA = t;
-    updateLiqUI();
-  } else if (ctx === "liqB") {
-    S.liqB = t;
-    updateLiqUI();
-  } else if (ctx === "importA") {
-    S.importA = t;
-    const el = $("importSymA");
-    if (el) el.textContent = t.symbol;
-    const lg = $("importLogoA");
-    if (lg) {
-      if (t.logoURI) {
-        lg.src = t.logoURI;
-        lg.style.display = "";
-      } else lg.style.display = "none";
-    }
-    checkImport();
-  } else if (ctx === "importB") {
-    S.importB = t;
-    const el = $("importSymB");
-    if (el) el.textContent = t.symbol;
-    const lg = $("importLogoB");
-    if (lg) {
-      if (t.logoURI) {
-        lg.src = t.logoURI;
-        lg.style.display = "";
-      } else lg.style.display = "none";
-    }
-    checkImport();
-  }
-  refreshBals();
-}
+
 function setTokUI(logoId, symId, t) {
   const logo = $(logoId),
     sym = $(symId);
@@ -1063,18 +1232,7 @@ function setTokUI(logoId, symId, t) {
     }
   }
 }
-function updateInUI() {
-  setTokUI("logoIn", "symIn", S.tIn);
-  detectWrapMode();
-  getQuote();
-  updateSwapBtn();
-}
-function updateOutUI() {
-  setTokUI("logoOut", "symOut", S.tOut);
-  detectWrapMode();
-  getQuote();
-  updateSwapBtn();
-}
+
 function detectWrapMode() {
   S.isWrapMode = isWrapUnwrapPair(S.tIn, S.tOut);
   const wrapBanner = $("wrapBanner");
@@ -1721,7 +1879,7 @@ function renderPositions(pos) {
     const d = document.createElement("div");
     d.className = "pool-pos";
     const sh = (p.sh.toNumber() / 100).toFixed(4);
-    d.innerHTML = `<div class="pos-hd"><span class="pos-pair">${p.tA.symbol}/${p.tB.symbol}</span><div class="pos-acts"><button class="pos-add" onclick="goAddLiq(${i})">Add</button><button class="pos-rm"  onclick="openRemove(${i})">Remove</button></div></div><div class="pos-data"><div class="pos-row"><span>Your ${p.tA.symbol}</span><span class="mono">${fmt(p.myA, p.tA.decimals, 6)}</span></div><div class="pos-row"><span>Your ${p.tB.symbol}</span><span class="mono">${fmt(p.myB, p.tB.decimals, 6)}</span></div><div class="pos-row"><span>Pool Share</span><span class="mono">${sh}%</span></div><div class="pos-row"><span>LP Tokens</span><span class="mono">${fmt(p.lpBal, 18, 8)}</span></div><div class="pos-row"><span>Pair</span><span class="mono"><a href="${CHAIN().explorer}address/${p.pa}" target="_blank" style="color:var(--cyan);text-decoration:none">${short(p.pa)} ↗</a></span></div></div>`;
+    d.innerHTML = `<div class="pos-hd"><span class="pos-pair">${p.tA.symbol}/${p.tB.symbol}</span><div class="pos-acts"><button class="pos-add" onclick="goAddLiq(${i})">Add</button><button class="pos-rm"  onclick="openRemove(${i})">Remove</button></div></div><div class="pos-data"><div class="pos-row"><span>Your ${p.tA.symbol}</span><span class="mono">${fmt(p.myA, p.tA.decimals, 6)}</span></div><div class="pos-row"><span>Your ${p.tB.symbol}</span><span class="mono">${fmt(p.myB, p.tB.decimals, 6)}</span></div><div class="pos-row"><span>Pool Share</span><span class="mono">${sh}%</span></div><div class="pos-row"><span>LP Tokens</span><span class="mono">${fmt(p.lpBal, 18, 8)}</span></div><div class="pos-row"><span>Pair</span><span class="mono"><a href="${CHAIN().explorer}address/${p.pa}" target="_blank" style="color:var(--cyan);text-decoration:none">${short(p.pa)} 🔍</a></span></div></div>`;
     el.appendChild(d);
   });
 }
@@ -1864,7 +2022,7 @@ async function checkImport() {
           myLP = fmt(await pr.balanceOf(S.account), 18, 8);
         } catch {}
       }
-      d.innerHTML = `<div class="detail-row"><span>Address</span><span><a href="${CHAIN().explorer}address/${pa}" target="_blank" style="color:var(--cyan);text-decoration:none">${short(pa)} ↗</a></span></div><div class="detail-row"><span>${escHtml(S.importA.symbol)} Reserve</span><span>${fmt(rA, S.importA.decimals, 4)}</span></div><div class="detail-row"><span>${escHtml(S.importB.symbol)} Reserve</span><span>${fmt(rB, S.importB.decimals, 4)}</span></div><div class="detail-row"><span>Total LP Supply</span><span>${fmt(ts, 18, 4)}</span></div><div class="detail-row"><span>Your LP Balance</span><span>${myLP}</span></div>`;
+      d.innerHTML = `<div class="detail-row"><span>Address</span><span><a href="${CHAIN().explorer}address/${pa}" target="_blank" style="color:var(--cyan);text-decoration:none">${short(pa)} 🔍</a></span></div><div class="detail-row"><span>${escHtml(S.importA.symbol)} Reserve</span><span>${fmt(rA, S.importA.decimals, 4)}</span></div><div class="detail-row"><span>${escHtml(S.importB.symbol)} Reserve</span><span>${fmt(rB, S.importB.decimals, 4)}</span></div><div class="detail-row"><span>Total LP Supply</span><span>${fmt(ts, 18, 4)}</span></div><div class="detail-row"><span>Your LP Balance</span><span>${myLP}</span></div>`;
       btn.disabled = false;
     }
   } catch (e) {
@@ -1898,7 +2056,7 @@ function renderTxns() {
     const ico =
       tx.s === "ok" ? "tx-ok" : tx.s === "fail" ? "tx-fail" : "tx-pend";
     const sym = tx.s === "ok" ? "✓" : tx.s === "fail" ? "✕" : "⏳";
-    d.innerHTML = `<span class="tx-txt">${tx.l}</span><span class="${ico}">${sym}</span><a class="tx-link" href="${CHAIN().explorer}tx/${tx.h}" target="_blank">↗</a>`;
+    d.innerHTML = `<span class="tx-txt">${tx.l}</span><span class="${ico}">${sym}</span><a class="tx-link" href="${CHAIN().explorer}tx/${tx.h}" target="_blank">🔍</a>`;
     el.appendChild(d);
   });
 }
@@ -1984,22 +2142,40 @@ window.debugChain = checkCurrentChainStatus;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
+  const pathname = window.location.pathname;
+  if (pathname === "/" || pathname === "") {
+    window.location.replace(
+      "/bsc" + window.location.search + window.location.hash,
+    );
+    return;
+  }
+
   initCanvas();
+
+  const pathChain = getChainFromPath();
+  if (pathChain) {
+    S.activeChainKey = pathChain;
+    save("chainKey", pathChain);
+  }
+
   initBaseTokens();
   initChainUI();
   renderTxns();
   renderCustomToks();
-  loadTokenList().then(() => {
-    S.customTokens
-      .filter((t) => (t.chainKey || "bsc") === S.activeChainKey)
-      .forEach((t) => {
-        const a = t.address.toLowerCase();
-        if (!S.allTokens.find((x) => x.address.toLowerCase() === a))
-          S.allTokens.push(t);
-      });
-    if ($("tokModalWrap").classList.contains("open"))
-      renderTokList($("tokSearch").value);
-  });
+
+  await loadTokenList();
+
+  S.customTokens
+    .filter((t) => (t.chainKey || "bsc") === S.activeChainKey)
+    .forEach((t) => {
+      const a = t.address.toLowerCase();
+      if (!S.allTokens.find((x) => x.address.toLowerCase() === a))
+        S.allTokens.push(t);
+    });
+
+  // ========== Apply URL params token list loaded ==========
+  await applyUrlParams();
+
   const chainTriggerBtn = $("chainTriggerBtn"),
     chainDropdown = $("chainDropdown");
   if (chainTriggerBtn && chainDropdown) {
@@ -2012,6 +2188,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         chainDropdown.classList.remove("open");
     });
   }
+
   document
     .querySelectorAll(".nav-link[data-page],.mob-link[data-page]")
     .forEach((el) => {
@@ -2020,16 +2197,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         closeMobMenu();
       });
     });
+
   $("burgerBtn").addEventListener("click", () => {
     const open = $("mobMenu").classList.toggle("open");
     $("mobOverlay").classList.toggle("show", open);
     $("burgerBtn").classList.toggle("open", open);
   });
+
   $("mobOverlay").addEventListener("click", closeMobMenu);
+
   $("walletBtn").addEventListener("click", () => {
     if (S.account) openModal("wdWrap");
     else openModal("walletModalWrap");
   });
+
   $("connMM").addEventListener("click", () => connectWallet());
   $("connTrust").addEventListener("click", () => connectWallet());
   $("connCB").addEventListener("click", () => connectWallet());
@@ -2039,23 +2220,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("closeWdModal").addEventListener("click", () => closeModal("wdWrap"));
   $("disconnectBtn").addEventListener("click", disconnectWallet);
   $("closeTokModal").addEventListener("click", closeTokModal);
+
   $("tokSearch").addEventListener("input", (e) => {
     const v = e.target.value;
     $("clearSearch").style.display = v ? "" : "none";
     renderTokList(v);
   });
+
   $("clearSearch").addEventListener("click", () => {
     $("tokSearch").value = "";
     $("clearSearch").style.display = "none";
     renderTokList("");
   });
+
   $("manageBtn").addEventListener("click", () => {
     closeTokModal();
     renderCustomToks();
     openModal("manageMWrap");
   });
+
   $("pickIn").addEventListener("click", () => openTokModal("in"));
   $("pickOut").addEventListener("click", () => openTokModal("out"));
+
   $("flipBtn").addEventListener("click", () => {
     const tmp = S.tIn;
     S.tIn = S.tOut;
@@ -2068,10 +2254,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     getQuote();
     refreshBals();
   });
+
   $("amountIn").addEventListener("input", () => {
     clearTimeout(S.quoteTimer);
     S.quoteTimer = setTimeout(getQuote, 500);
   });
+
   document.querySelectorAll(".pct[data-p]").forEach((b) => {
     b.addEventListener("click", async () => {
       if (!S.account || !S.tIn) return;
@@ -2083,15 +2271,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       getQuote();
     });
   });
+
   $("refreshBtn").addEventListener("click", () => {
     $("refreshBtn").classList.add("spin");
     getQuote().finally(() =>
       setTimeout(() => $("refreshBtn").classList.remove("spin"), 600),
     );
   });
+
   $("settingsBtn").addEventListener("click", () =>
     $("settPanel").classList.toggle("open"),
   );
+
   document.querySelectorAll(".slip-b[data-s]").forEach((b) => {
     b.addEventListener("click", () => {
       document
@@ -2103,6 +2294,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       save("slip", S.slippage);
     });
   });
+
   $("customSlip").addEventListener("input", (e) => {
     const v = parseFloat(e.target.value);
     if (v > 0 && v <= 50) {
@@ -2113,31 +2305,38 @@ document.addEventListener("DOMContentLoaded", async () => {
       save("slip", S.slippage);
     }
   });
+
   $("txDeadline").value = S.deadline;
   $("txDeadline").addEventListener("input", (e) => {
     S.deadline = parseInt(e.target.value) || 20;
     save("ddl", S.deadline);
   });
+
   $("clearTxs").addEventListener("click", () => {
     S.txns = [];
     save("txns", S.txns);
     renderTxns();
   });
+
   $("liqPickA").addEventListener("click", () => openTokModal("liqA"));
   $("liqPickB").addEventListener("click", () => openTokModal("liqB"));
   $("liqPickA2").addEventListener("click", () => openTokModal("liqA"));
   $("liqPickB2").addEventListener("click", () => openTokModal("liqB"));
+
   $("liqAmtA").addEventListener("input", () => {
     clearTimeout(S.quoteTimer);
     S.quoteTimer = setTimeout(onLiqAmtAChange, 500);
   });
+
   $("liqAmtB").addEventListener("input", () => {
     updateAddLiqBtn();
     checkLiqApprovals();
   });
+
   $("liqSettBtn").addEventListener("click", () =>
     $("liqSettPanel").classList.toggle("open"),
   );
+
   document.querySelectorAll(".slip-b[data-ls]").forEach((b) => {
     b.addEventListener("click", () => {
       document
@@ -2147,6 +2346,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       S.liqSlippage = parseFloat(b.dataset.ls);
     });
   });
+
   $("liqBalA").addEventListener("click", async () => {
     if (!S.account || !S.liqA) return;
     const b = await getBal(S.liqA, S.account).catch(() =>
@@ -2155,6 +2355,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("liqAmtA").value = fmt(b, S.liqA.decimals, 8);
     onLiqAmtAChange();
   });
+
   $("liqBalB").addEventListener("click", async () => {
     if (!S.account || !S.liqB) return;
     const b = await getBal(S.liqB, S.account).catch(() =>
@@ -2163,18 +2364,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("liqAmtB").value = fmt(b, S.liqB.decimals, 8);
     updateAddLiqBtn();
   });
+
   $("goAddLiqBtn").addEventListener("click", () => navTo("liquidity"));
+
   $("refreshPoolBtn").addEventListener("click", () => {
     $("refreshPoolBtn").classList.add("spin");
     loadPositions().finally(() =>
       setTimeout(() => $("refreshPoolBtn").classList.remove("spin"), 800),
     );
   });
+
   $("importPoolBtn").addEventListener("click", () => openModal("importMWrap"));
   $("closeRemoveM").addEventListener("click", () => closeModal("removeMWrap"));
+
   $("rmSlider").addEventListener("input", (e) =>
     updateRemoveOutput(parseInt(e.target.value)),
   );
+
   document.querySelectorAll(".pct[data-rp]").forEach((b) => {
     b.addEventListener("click", () => {
       const pct = parseInt(b.dataset.rp);
@@ -2182,10 +2388,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       updateRemoveOutput(pct);
     });
   });
+
   $("approveLPBtn").addEventListener("click", approveLP);
   $("closeImportM").addEventListener("click", () => closeModal("importMWrap"));
   $("importPickA").addEventListener("click", () => openTokModal("importA"));
   $("importPickB").addEventListener("click", () => openTokModal("importB"));
+
   $("confirmImportBtn").addEventListener("click", () => {
     if (S.importA && S.importB) {
       toast(`Pool ${S.importA.symbol}/${S.importB.symbol} imported!`, "ok");
@@ -2193,12 +2401,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadPositions();
     }
   });
+
   $("closeManageM").addEventListener("click", () => closeModal("manageMWrap"));
+
   let customTimer;
   $("customAddr").addEventListener("input", (e) => {
     clearTimeout(customTimer);
     customTimer = setTimeout(() => fetchCustomPreview(e.target.value), 600);
   });
+
   $("importCustomBtn").addEventListener("click", async () => {
     const addr = $("customAddr").value.trim();
     if (!addr.startsWith("0x") || addr.length !== 42) {
@@ -2238,6 +2449,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("customPreview").classList.add("hidden");
     renderCustomToks();
   });
+
   document.querySelectorAll(".modal-wrap").forEach((w) => {
     w.addEventListener("click", (e) => {
       if (e.target === w) {
@@ -2246,6 +2458,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   });
+
+  // ========== WALLET EVENT LISTENERS ==========
   if (window.ethereum) {
     window.ethereum.on("accountsChanged", (accs) => {
       if (!accs.length) disconnectWallet();
@@ -2258,11 +2472,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     window.ethereum.on("chainChanged", async (chainIdHex) => {
       console.log("🔗 MetaMask chain changed:", chainIdHex);
+
+      // JANGAN CEK S.isSwitchingChain - langsung proses saja
       const matchedKey = Object.keys(CHAINS).find((k) => {
         const ch = CHAINS[k];
         const targetHex = ch.hex.toLowerCase();
         return targetHex === chainIdHex.toLowerCase();
       });
+
       if (matchedKey && matchedKey !== S.activeChainKey) {
         console.log(`🔄 Syncing UI to chain: ${matchedKey}`);
         S.activeChainKey = matchedKey;
@@ -2293,7 +2510,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       })
       .catch(() => {});
   }
-  applyUrlParams();
+
+  // ========== Handle browser back/forward ==========
+  window.addEventListener("popstate", async () => {
+    const newPathChain = getChainFromPath();
+    if (newPathChain && newPathChain !== S.activeChainKey) {
+      S.activeChainKey = newPathChain;
+      save("chainKey", newPathChain);
+      resetChainDependentState();
+      await reinitializeAfterChainSwitch();
+      if (S.account) {
+        await requestWalletChainSwitch(newPathChain);
+        await refreshWalletAfterChainSwitch();
+      }
+    }
+    await applyUrlParams();
+  });
+
   console.log(
     "🚀 RecehDEX ready | Chain:",
     CHAIN().name,
