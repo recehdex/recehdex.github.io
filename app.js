@@ -201,6 +201,27 @@ async function initializeFromUrlPath() {
   return true;
 }
 
+function updateUrlForChain(chainKey, preserveParams = true) {
+  var currentParams = new URLSearchParams(window.location.search);
+  var currentPage = getCurrentPageFromUI();
+  
+  var newPath = '/' + chainKey;
+  if (currentPage && currentPage !== "swap") {
+    newPath += '/' + currentPage;
+  }
+  
+  var newUrl = newPath;
+  if (preserveParams && currentParams.toString()) {
+    newUrl += "?" + currentParams.toString();
+  }
+  
+  newUrl += window.location.hash;
+  
+  if (window.location.pathname + window.location.search !== newPath + (preserveParams ? "?" + currentParams.toString() : "")) {
+    window.history.pushState({ chainKey: chainKey, page: currentPage }, "", newUrl);
+  }
+}
+
 // ─── switchActiveChain ──────────────────────
 async function switchActiveChain(key, preserveParams = true) {
   if (key === S.activeChainKey) {
@@ -2170,7 +2191,6 @@ document.addEventListener("DOMContentLoaded", async () => {
  restoreOriginalPath();
   var initialized = await initializeFromUrlPath();
   if (!initialized) return;
-  const pathname = window.location.pathname;
   const pathname = window.location.pathname;
   if (pathname === "/" || pathname === "") {
     window.location.replace(
