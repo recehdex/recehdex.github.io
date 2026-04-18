@@ -1,41 +1,61 @@
 "use strict";
 
 (function() {
-  var savedPath = localStorage.getItem('redirectPath');
-  var savedSearch = localStorage.getItem('redirectSearch');
-  var savedHash = localStorage.getItem('redirectHash');
+  
+  var savedPath = sessionStorage.getItem('originalPath');
+  var savedSearch = sessionStorage.getItem('originalSearch');
+  var savedHash = sessionStorage.getItem('originalHash');
+  
+  sessionStorage.removeItem('isRedirecting');
   
   if (savedPath && savedPath !== '/' && savedPath !== '/index.html') {
     window.__originalPath = savedPath;
     window.__originalSearch = savedSearch || '';
     window.__originalHash = savedHash || '';
-    localStorage.removeItem('redirectPath');
-    localStorage.removeItem('redirectSearch');
-    localStorage.removeItem('redirectHash');
+    
+    sessionStorage.removeItem('originalPath');
+    sessionStorage.removeItem('originalSearch');
+    sessionStorage.removeItem('originalHash');
+    
+    console.log('📍 Original path:', window.__originalPath);
+  }
+  
+  if (window.location.search.includes('code=')) {
+    var cleanUrl = window.location.pathname;
+    window.history.replaceState({}, '', cleanUrl);
   }
 })();
 
 function getChainFromPath() {
+ 
   var originalPath = window.__originalPath || window.location.pathname;
   var path = originalPath.toLowerCase().replace(/^\/|\/$/g, '');
+  
   if (path === "bsc" || path.startsWith("bsc/")) return "bsc";
   if (path === "riche" || path.startsWith("riche/")) return "riche";
+  
   return null;
 }
 
 function getCurrentPageFromUrl() {
   var originalPath = window.__originalPath || window.location.pathname;
-  var parts = originalPath.toLowerCase().replace(/^\/|\/$/g, '').split('/');
-  if (parts.length >= 2 && ["swap", "liquidity", "pool"].includes(parts[1])) {
-    return parts[1];
+  var path = originalPath.toLowerCase().replace(/^\/|\/$/g, '');
+  var parts = path.split('/').filter(p => p);
+  
+  if (parts.length >= 2) {
+    var page = parts[1];
+    if (["swap", "liquidity", "pool"].includes(page)) return page;
   }
   return null;
 }
 
 function restoreOriginalPath() {
-  if (window.__originalPath) {
-    window.history.replaceState({}, '', window.__originalPath + 
-      (window.__originalSearch || '') + (window.__originalHash || ''));
+  if (window.__originalPath && !window.location.pathname.includes(window.__originalPath)) {
+    var newUrl = window.__originalPath + 
+                 (window.__originalSearch || '') + 
+                 (window.__originalHash || '');
+    window.history.replaceState({}, '', newUrl);
+    console.log('🔄 URL restored to:', newUrl);
   }
 }
 
@@ -116,57 +136,6 @@ const S = {
   isSwitchingChain: false,
 };
 
-// ─── URL ROUTING ─────────────────────────────────────────────────────────────
-function getChainFromPath() {
-  const path = window.location.pathname.toLowerCase();
-  if (path === "/bsc" || path.startsWith("/bsc/")) return "bsc";
-  if (path === "/riche" || path.startsWith("/riche/")) return "riche";
-  return null;
-}
-
-function updateUrlForChain(chainKey, preserveParams = true) {
-  const currentParams = new URLSearchParams(window.location.search);
-  const currentPage = getCurrentPageFromUrl() || getCurrentPageFromUI();
-
-  let newPath = `/${chainKey}`;
-  if (currentPage && currentPage !== "swap") {
-    newPath += `/${currentPage}`;
-  }
-
-  let newUrl = newPath;
-  if (preserveParams && currentParams.toString()) {
-    newUrl += "?" + currentParams.toString();
-  }
-
-  const newFullUrl = newUrl + window.location.hash;
-  if (
-    window.location.pathname + window.location.search !==
-    newPath + (preserveParams ? "?" + currentParams.toString() : "")
-  ) {
-    window.history.pushState({ chainKey, page: currentPage }, "", newFullUrl);
-  }
-}
-
-function getCurrentPageFromUrl() {
-  const pathParts = window.location.pathname.split("/").filter((p) => p);
-  if (pathParts.length >= 2) {
-    const page = pathParts[1];
-    if (["swap", "liquidity", "pool"].includes(page)) return page;
-  }
-  return null;
-}
-
-function getCurrentPageFromUI() {
-  const activePage = document.querySelector(".page.active");
-  if (activePage) {
-    const id = activePage.id;
-    if (id === "page-swap") return "swap";
-    if (id === "page-liquidity") return "liquidity";
-    if (id === "page-pool") return "pool";
-  }
-  return "swap";
-}
-
 function updatePageUrlFromUI() {
   const currentPage = getCurrentPageFromUI();
   const chainKey = S.activeChainKey;
@@ -187,31 +156,48 @@ function updatePageUrlFromUI() {
 
 // ─── INITIALIZE FROM URL PATH ────────────────────────────────────────────────
 async function initializeFromUrlPath() {
-  const pathChain = getChainFromPath();
-  const savedChain = load("chainKey", "bsc");
-  const urlPage = getCurrentPageFromUrl();
-
-  let targetChain = pathChain;
-  if (!targetChain) {
-    targetChain = savedChain;
-    const newPath = `/${targetChain}` + (urlPage ? `/${urlPage}` : "");
-    window.location.replace(
-      newPath + window.location.search + window.location.hash,
-    );
+ 
+  restoreOriginalPath();
+  
+  var pathChain = getChainFromPath();
+  var savedChain = load("chainKey", "bsc");
+  var urlPage = getCurrentPageFromUrl();
+  
+  var currentPath = window.location.pathname;
+  var expectedPath = pathChain ? '/' + pathChain + (urlPage ? '/' + urlPage : '') : '';
+  
+  if (expectedPath && currentPath === expectedPath) {
+    if (pathChain && pathChain !== S.activeChainKey) {
+      S.activeChainKey = pathChain;
+      save("chainKey", pathChain);
+      resetChainDependentState();
+      await reinitializeAfterChainSwitch();
+    }
+    if (urlPage && urlPage !== getCurrentPageFromUI()) {
+      navTo(urlPage);
+    }
+    return true;
+  }
+  
+  var targetChain = pathChain || savedChain;
+  var newPath = '/' + targetChain + (urlPage && urlPage !== 'swap' ? '/' + urlPage : '');
+  
+  if (currentPath !== newPath && !window.__originalPath) {
+    window.location.replace(newPath + window.location.search + window.location.hash);
     return false;
   }
-
-  if (targetChain !== S.activeChainKey) {
-    S.activeChainKey = targetChain;
-    save("chainKey", targetChain);
+  
+  if (pathChain && pathChain !== S.activeChainKey) {
+    S.activeChainKey = pathChain;
+    save("chainKey", pathChain);
     resetChainDependentState();
     await reinitializeAfterChainSwitch();
   }
-
+  
   if (urlPage && urlPage !== getCurrentPageFromUI()) {
     navTo(urlPage);
   }
-
+  
   return true;
 }
 
@@ -2182,6 +2168,9 @@ window.debugChain = checkCurrentChainStatus;
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
  restoreOriginalPath();
+  var initialized = await initializeFromUrlPath();
+  if (!initialized) return;
+  const pathname = window.location.pathname;
   const pathname = window.location.pathname;
   if (pathname === "/" || pathname === "") {
     window.location.replace(
