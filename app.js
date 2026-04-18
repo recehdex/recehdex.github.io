@@ -1,3 +1,22 @@
+(function() {
+
+  var savedPath = sessionStorage.getItem('originalPath');
+  var currentPath = window.location.pathname;
+  
+  var validPaths = ['/', '/index.html'];
+  
+  if (savedPath && savedPath !== '/' && !validPaths.includes(currentPath)) {
+    
+    window.__originalPath = savedPath;
+    sessionStorage.removeItem('originalPath');
+  } else if (currentPath !== '/' && !validPaths.includes(currentPath)) {
+    
+    sessionStorage.setItem('originalPath', currentPath);
+    window.location.replace('/');
+    return;
+  }
+})();
+
 "use strict";
 
 const CHAINS = {
