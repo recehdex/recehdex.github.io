@@ -2,23 +2,41 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>RecehDEX</title>
+  <title>Redirecting...</title>
   <script>
-    var path = window.location.pathname;
-    var search = window.location.search;
-    var hash = window.location.hash;
-
-    localStorage.setItem('redirectPath', path);
-    localStorage.setItem('redirectSearch', search);
-    localStorage.setItem('redirectHash', hash);
-    
-    window.location.replace('/');
+    (function() {
+     
+      var redirectFlag = sessionStorage.getItem('isRedirecting');
+      
+      if (redirectFlag === 'true') {
+        
+        sessionStorage.removeItem('isRedirecting');
+        window.location.replace('/');
+        return;
+      }
+      
+      var path = window.location.pathname;
+      var search = window.location.search;
+      var hash = window.location.hash;
+      
+      if (path === '/' || path === '/index.html') {
+        return;
+      }
+      
+      sessionStorage.setItem('isRedirecting', 'true');
+      
+      sessionStorage.setItem('originalPath', path);
+      sessionStorage.setItem('originalSearch', search);
+      sessionStorage.setItem('originalHash', hash);
+      
+      window.location.replace('/');
+    })();
   </script>
 </head>
 <body>
   <div style="text-align:center;padding:50px;font-family:sans-serif">
     <h2>Loading RecehDEX...</h2>
-    <p>Please wait, redirecting...</p>
+    <p>Please wait...</p>
   </div>
 </body>
 </html>
