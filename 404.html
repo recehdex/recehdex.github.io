@@ -2,16 +2,12 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Redirecting...</title>
+  <title>RecehDEX</title>
   <script>
     (function() {
      
-      var redirectFlag = sessionStorage.getItem('isRedirecting');
-      
-      if (redirectFlag === 'true') {
-        
+      if (sessionStorage.getItem('isRedirecting')) {
         sessionStorage.removeItem('isRedirecting');
-        window.location.replace('/');
         return;
       }
       
@@ -24,7 +20,6 @@
       }
       
       sessionStorage.setItem('isRedirecting', 'true');
-      
       sessionStorage.setItem('originalPath', path);
       sessionStorage.setItem('originalSearch', search);
       sessionStorage.setItem('originalHash', hash);
@@ -36,7 +31,6 @@
 <body>
   <div style="text-align:center;padding:50px;font-family:sans-serif">
     <h2>Loading RecehDEX...</h2>
-    <p>Please wait...</p>
   </div>
 </body>
 </html>
