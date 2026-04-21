@@ -1,111 +1,28 @@
 "use strict";
 
-(function() {
-  
-  var savedPath = sessionStorage.getItem('originalPath');
-  var savedSearch = sessionStorage.getItem('originalSearch');
-  var savedHash = sessionStorage.getItem('originalHash');
-  
-  sessionStorage.removeItem('isRedirecting');
-  
-  if (savedPath && savedPath !== '/' && savedPath !== '/index.html') {
-    window.__originalPath = savedPath;
-    window.__originalSearch = savedSearch || '';
-    window.__originalHash = savedHash || '';
-    
-    sessionStorage.removeItem('originalPath');
-    sessionStorage.removeItem('originalSearch');
-    sessionStorage.removeItem('originalHash');
-    
-    console.log('📍 Original path:', window.__originalPath);
-  }
-  
-  if (window.location.search.includes('code=')) {
-    var cleanUrl = window.location.pathname;
-    window.history.replaceState({}, '', cleanUrl);
-  }
-})();
-
-function getChainFromPath() {
- 
-  var originalPath = window.__originalPath || window.location.pathname;
-  var path = originalPath.toLowerCase().replace(/^\/|\/$/g, '');
-  
-  if (path === "bsc" || path.startsWith("bsc/")) return "bsc";
-  if (path === "riche" || path.startsWith("riche/")) return "riche";
-  
-  return null;
-}
-
-function getCurrentPageFromUrl() {
-  var originalPath = window.__originalPath || window.location.pathname;
-  var path = originalPath.toLowerCase().replace(/^\/|\/$/g, '');
-  var parts = path.split('/').filter(p => p);
-  
-  if (parts.length >= 2) {
-    var page = parts[1];
-    if (["swap", "liquidity", "pool"].includes(page)) return page;
-  }
-  return null;
-}
-
-function restoreOriginalPath() {
-  if (window.__originalPath && !window.location.pathname.includes(window.__originalPath)) {
-    var newUrl = window.__originalPath + 
-                 (window.__originalSearch || '') + 
-                 (window.__originalHash || '');
-    window.history.replaceState({}, '', newUrl);
-    console.log('🔄 URL restored to:', newUrl);
-  }
-}
-
-const CHAINS = {
-  bsc: {
-    id: 56,
-    hex: "0x38",
-    name: "BNB Smart Chain",
-    shortName: "BSC",
-    rpc: "https://bsc-rpc.publicnode.com/",
-    explorer: "https://bscscan.com/",
-    symbol: "BNB",
-    decimals: 18,
-    FACTORY: "0x8E9556415124b6C726D5C3610d25c24Be8AC2304",
-    ROUTER: "0xA131F04149CFA29b3f05d361EA807e737C9b1D95",
-    WNATIVE: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
-    WNATIVE_SYMBOL: "WBNB",
-    WNATIVE_NAME: "Wrapped BNB",
-    WNATIVE_LOGO:
-      "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/binance/info/logo.png",
-    TOKEN_LIST_URL:
-      "https://raw.githubusercontent.com/recehdex/token-list/refs/heads/main/bsc.json",
-    INIT_CODE_HASH:
-      "0xacbe571ca822f0db25af9ae298ee37b6f490444417fa384a4fabcdc84d08aaea",
-    color: "#f0b90b",
-    logo: "https://raw.githubusercontent.com/recehdex/recehdex.github.io/refs/heads/main/images/bsc-logo-100x100.png",
-  },
-  riche: {
-    id: 132026,
-    hex: "0x203BA",
-    name: "Riche Chain",
-    shortName: "RICHE",
-    rpc: "https://seed-richechain.com/",
-    explorer: "https://richescan.com/",
-    symbol: "RIC",
-    decimals: 18,
-    FACTORY: "0xAeEdf8B9925c6316171f7c2815e387DE596Fa11B",
-    ROUTER: "0x8E9556415124b6C726D5C3610d25c24Be8AC2304",
-    WNATIVE: "0xEa126036c94Ab6A384A25A70e29E2fE2D4a91e68",
-    WNATIVE_SYMBOL: "WRIC",
-    WNATIVE_NAME: "Wrapped RIC",
-    WNATIVE_LOGO:
-      "https://raw.githubusercontent.com/recehdex/token-logo/refs/heads/main/WRIC.png",
-    TOKEN_LIST_URL:
-      "https://raw.githubusercontent.com/recehdex/token-list/refs/heads/main/riche-chain.json",
-    INIT_CODE_HASH:
-      "0x1a7269cf92faf25d5d029d824efa09ac194fea41206609a271df037af4772a43",
-    color: "#00ffff",
-    logo: "https://raw.githubusercontent.com/recehdex/token-logo/refs/heads/main/WRIC.png",
-  },
+// ─── CHAIN CONFIGURATION (SINGLE CHAIN: RICHE) ──────────────────────────────
+const CHAIN_CONFIG = {
+  id: 132026,
+  hex: "0x203BA",
+  name: "Riche Chain",
+  shortName: "RICHE",
+  rpc: "https://seed-richechain.com/",
+  explorer: "https://richescan.com/",
+  symbol: "RIC",
+  decimals: 18,
+  FACTORY: "0xAeEdf8B9925c6316171f7c2815e387DE596Fa11B",
+  ROUTER: "0x8E9556415124b6C726D5C3610d25c24Be8AC2304",
+  WNATIVE: "0xEa126036c94Ab6A384A25A70e29E2fE2D4a91e68",
+  WNATIVE_SYMBOL: "WRIC",
+  WNATIVE_NAME: "Wrapped RIC",
+  WNATIVE_LOGO:
+    "https://raw.githubusercontent.com/recehdex/token-logo/refs/heads/main/WRIC.png",
+  TOKEN_LIST_URL:
+    "https://raw.githubusercontent.com/recehdex/token-list/refs/heads/main/riche-chain.json",
+  INIT_CODE_HASH:
+    "0x1a7269cf92faf25d5d029d824efa09ac194fea41206609a271df037af4772a43",
+  color: "#00ffff",
+  logo: "https://raw.githubusercontent.com/recehdex/token-logo/refs/heads/main/WRIC.png",
 };
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -131,155 +48,312 @@ const S = {
   txns: [],
   positions: [],
   quoteTimer: null,
-  activeChainKey: "bsc",
   isWrapMode: false,
-  isSwitchingChain: false,
 };
 
-function updatePageUrlFromUI() {
-  const currentPage = getCurrentPageFromUI();
-  const chainKey = S.activeChainKey;
-  const currentParams = new URLSearchParams(window.location.search);
-
-  let newPath = `/${chainKey}`;
-  if (currentPage !== "swap") {
-    newPath += `/${currentPage}`;
+// ─── PERSIST ─────────────────────────────────────────────────────────────────
+function load(k, def) {
+  try {
+    const v = localStorage.getItem("rdex_" + k);
+    return v ? JSON.parse(v) : def;
+  } catch {
+    return def;
   }
-
-  let newUrl = newPath;
-  if (currentParams.toString()) {
-    newUrl += "?" + currentParams.toString();
-  }
-
-  window.history.pushState({ chainKey, page: currentPage }, "", newUrl);
 }
 
-// ─── INITIALIZE FROM URL PATH ────────────────────────────────────────────────
-async function initializeFromUrlPath() {
- 
-  restoreOriginalPath();
-  
-  var pathChain = getChainFromPath();
-  var savedChain = load("chainKey", "bsc");
-  var urlPage = getCurrentPageFromUrl();
-  
-  var currentPath = window.location.pathname;
-  var expectedPath = pathChain ? '/' + pathChain + (urlPage ? '/' + urlPage : '') : '';
-  
-  if (expectedPath && currentPath === expectedPath) {
-    if (pathChain && pathChain !== S.activeChainKey) {
-      S.activeChainKey = pathChain;
-      save("chainKey", pathChain);
-      resetChainDependentState();
-      await reinitializeAfterChainSwitch();
+function save(k, v) {
+  try {
+    localStorage.setItem("rdex_" + k, JSON.stringify(v));
+  } catch {}
+}
+
+// Load persisted data
+S.customTokens = load("custom", []);
+S.txns = load("txns", []);
+S.slippage = load("slip", 0.5);
+S.deadline = load("ddl", 20);
+
+// ─── CHAIN ACCESSORS ─────────────────────────────────────────────────────────
+function CHAIN() {
+  return CHAIN_CONFIG;
+}
+
+function allToks() {
+  return [...S.allTokens, ...S.customTokens];
+}
+
+function routeAddr(t) {
+  return t.isNative ? CHAIN().WNATIVE : t.address;
+}
+
+// ─── BUILT-IN TOKENS ─────────────────────────────────────────────────────────
+function makeNativeToken() {
+  return {
+    address: "NATIVE",
+    symbol: CHAIN_CONFIG.symbol,
+    name: CHAIN_CONFIG.name,
+    decimals: 18,
+    logoURI: CHAIN_CONFIG.WNATIVE_LOGO,
+    isNative: true,
+    chainKey: "riche",
+  };
+}
+
+function makeWrappedToken() {
+  return {
+    address: CHAIN_CONFIG.WNATIVE,
+    symbol: CHAIN_CONFIG.WNATIVE_SYMBOL,
+    name: CHAIN_CONFIG.WNATIVE_NAME,
+    decimals: 18,
+    logoURI: CHAIN_CONFIG.WNATIVE_LOGO,
+    isNative: false,
+    chainKey: "riche",
+  };
+}
+
+// ─── ABIs ─────────────────────────────────────────────────────────────────────
+const ERC20_ABI = [
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function balanceOf(address) view returns (uint256)",
+  "function allowance(address,address) view returns (uint256)",
+  "function approve(address,uint256) returns (bool)",
+];
+
+const WETH_ABI = [
+  ...ERC20_ABI,
+  "function deposit() payable",
+  "function withdraw(uint256)",
+];
+
+const FACTORY_ABI = [
+  "function getPair(address,address) view returns (address)",
+  "function allPairs(uint256) view returns (address)",
+  "function allPairsLength() view returns (uint256)",
+];
+
+const PAIR_ABI = [
+  "function token0() view returns (address)",
+  "function token1() view returns (address)",
+  "function getReserves() view returns (uint112,uint112,uint32)",
+  "function totalSupply() view returns (uint256)",
+  "function balanceOf(address) view returns (uint256)",
+  "function allowance(address,address) view returns (uint256)",
+  "function approve(address,uint256) returns (bool)",
+];
+
+const ROUTER_ABI = [
+  "function WETH() view returns (address)",
+  "function getAmountsOut(uint256,address[]) view returns (uint256[])",
+  "function swapExactETHForTokens(uint256,address[],address,uint256) payable returns (uint256[])",
+  "function swapExactTokensForETH(uint256,uint256,address[],address,uint256) returns (uint256[])",
+  "function swapExactTokensForTokens(uint256,uint256,address[],address,uint256) returns (uint256[])",
+  "function addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256) returns (uint256,uint256,uint256)",
+  "function addLiquidityETH(address,uint256,uint256,uint256,address,uint256) payable returns (uint256,uint256,uint256)",
+  "function removeLiquidity(address,address,uint256,uint256,uint256,address,uint256) returns (uint256,uint256)",
+  "function removeLiquidityETH(address,uint256,uint256,uint256,address,uint256) returns (uint256,uint256)",
+];
+
+// ─── PROVIDERS ───────────────────────────────────────────────────────────────
+const readProv = () => new ethers.providers.JsonRpcProvider(CHAIN().rpc);
+
+const router = (sp) =>
+  new ethers.Contract(CHAIN().ROUTER, ROUTER_ABI, sp || readProv());
+
+const factory = (sp) =>
+  new ethers.Contract(CHAIN().FACTORY, FACTORY_ABI, sp || readProv());
+
+const erc20 = (a, sp) => new ethers.Contract(a, ERC20_ABI, sp || readProv());
+
+const wethC = (sp) =>
+  new ethers.Contract(CHAIN().WNATIVE, WETH_ABI, sp || readProv());
+
+const pairC = (a, sp) => new ethers.Contract(a, PAIR_ABI, sp || readProv());
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function short(a) {
+  return a ? a.slice(0, 6) + "…" + a.slice(-4) : "";
+}
+
+function fmt(bn, dec = 18, dp = 6) {
+  if (!bn) return "0";
+  try {
+    const n = parseFloat(ethers.utils.formatUnits(bn, dec));
+    if (n === 0) return "0";
+    if (n < 0.000001) return "<0.000001";
+    return n.toFixed(dp).replace(/\.?0+$/, "");
+  } catch {
+    return "0";
+  }
+}
+
+function parse(v, dec = 18) {
+  try {
+    return ethers.utils.parseUnits(String(v || "0"), dec);
+  } catch {
+    return ethers.BigNumber.from(0);
+  }
+}
+
+function ddl() {
+  return Math.floor(Date.now() / 1000) + S.deadline * 60;
+}
+
+function minAmt(bn) {
+  const bps = Math.floor(10000 - S.slippage * 100);
+  return bn.mul(bps).div(10000);
+}
+
+function minAmtLiq(bn) {
+  const bps = Math.floor(10000 - S.liqSlippage * 100);
+  return bn.mul(bps).div(10000);
+}
+
+function isWrapUnwrapPair(tA, tB) {
+  if (!tA || !tB) return false;
+  const wnLower = CHAIN().WNATIVE.toLowerCase();
+  const aIsNative = tA.isNative;
+  const bIsNative = tB.isNative;
+  const aIsWrapped = !tA.isNative && tA.address.toLowerCase() === wnLower;
+  const bIsWrapped = !tB.isNative && tB.address.toLowerCase() === wnLower;
+  return (aIsNative && bIsWrapped) || (aIsWrapped && bIsNative);
+}
+
+// ─── UI HELPERS ──────────────────────────────────────────────────────────────
+function $(id) {
+  return document.getElementById(id);
+}
+
+function showTx(t, s) {
+  $("txTitle").textContent = t || "Processing…";
+  $("txMsg").textContent = s || "Confirm in wallet";
+  $("txMask").classList.add("show");
+}
+
+function hideTx() {
+  $("txMask").classList.remove("show");
+}
+
+function toast(msg, type = "info", ms = 4000) {
+  const el = document.createElement("div");
+  el.className = "toast " + type;
+  el.innerHTML = `<span class="ti"></span><span>${msg}</span>`;
+  $("toastStack").appendChild(el);
+  setTimeout(() => {
+    el.style.animation = "toastOut .3s ease forwards";
+    setTimeout(() => el.remove(), 300);
+  }, ms);
+}
+
+function openModal(id) {
+  $(id).classList.add("open");
+}
+
+function closeModal(id) {
+  $(id).classList.remove("open");
+}
+
+function escHtml(s) {
+  return String(s).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+}
+
+// ─── BACKGROUND CANVAS ───────────────────────────────────────────────────────
+function initCanvas() {
+  const c = $("bgCanvas");
+  if (!c) return;
+  const ctx = c.getContext("2d");
+  let W,
+    H,
+    particles = [];
+
+  function resize() {
+    W = c.width = window.innerWidth;
+    H = c.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random() * 1920,
+      y: Math.random() * 1080,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      r: Math.random() * 1.5 + 0.5,
+      c: Math.random() > 0.5 ? "rgba(0,200,255," : "rgba(148,0,255,",
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach((p) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = W;
+      if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H;
+      if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.c + "0.7)";
+      ctx.fill();
+    });
+
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const d = Math.hypot(
+          particles[i].x - particles[j].x,
+          particles[i].y - particles[j].y,
+        );
+        if (d < 120) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(0,200,255,${0.15 * (1 - d / 120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+        }
+      }
     }
-    if (urlPage && urlPage !== getCurrentPageFromUI()) {
-      navTo(urlPage);
-    }
-    return true;
+    requestAnimationFrame(draw);
   }
-  
-  var targetChain = pathChain || savedChain;
-  var newPath = '/' + targetChain + (urlPage && urlPage !== 'swap' ? '/' + urlPage : '');
-  
-  if (currentPath !== newPath && !window.__originalPath) {
-    window.location.replace(newPath + window.location.search + window.location.hash);
-    return false;
-  }
-  
-  if (pathChain && pathChain !== S.activeChainKey) {
-    S.activeChainKey = pathChain;
-    save("chainKey", pathChain);
-    resetChainDependentState();
-    await reinitializeAfterChainSwitch();
-  }
-  
-  if (urlPage && urlPage !== getCurrentPageFromUI()) {
-    navTo(urlPage);
-  }
-  
-  return true;
+  draw();
 }
 
-function updateUrlForChain(chainKey, preserveParams = true) {
-  var currentParams = new URLSearchParams(window.location.search);
-  var currentPage = getCurrentPageFromUI();
-  
-  // Bangun path baru
-  var newPath = '/' + chainKey;
-  if (currentPage && currentPage !== "swap") {
-    newPath += '/' + currentPage;
+// ─── CHAIN UI (SINGLE CHAIN) ─────────────────
+function initChainUI() {
+  // Sembunyikan seluruh UI chain selector
+  const chainDropdownWrap = $("chainDropdownWrap");
+  if (chainDropdownWrap) chainDropdownWrap.style.display = "none";
+
+  const chainSelectorMob = $("chainSelectorMob");
+  if (chainSelectorMob) {
+    const parentRow = chainSelectorMob.closest(".mob-network-row");
+    if (parentRow) parentRow.style.display = "none";
   }
-  
-  var queryString = '';
-  if (preserveParams && currentParams.toString()) {
-    queryString = '?' + currentParams.toString();
-  }
-  
-  var newUrl = newPath + queryString + window.location.hash;
-  
-  var currentFullPath = window.location.pathname + window.location.search;
-  var newFullPath = newPath + queryString;
-  
-  if (currentFullPath !== newFullPath) {
-    console.log('🔄 Updating URL from', currentFullPath, 'to', newFullPath);
-    window.history.pushState({ chainKey: chainKey, page: currentPage }, "", newUrl);
-  } else {
-    console.log('⚠️ URL already correct, no update needed');
-  }
+
+  // Update wallet network info
+  const wdNet = $("wdNet");
+  if (wdNet) wdNet.textContent = `${CHAIN().name} · ID ${CHAIN().id}`;
 }
 
-// ─── switchActiveChain ──────────────────────
-async function switchActiveChain(key, preserveParams = true) {
-  if (key === S.activeChainKey) {
-    console.log("Sudah di chain yang sama");
-    return;
-  }
-  if (S.isSwitchingChain) {
-    toast("Sedang beralih jaringan, tunggu sebentar...", "warn");
-    return;
-  }
-
-  const newChain = getChainByKey(key);
-  if (!newChain) {
-    toast(`Chain ${key} tidak tersedia`, "err");
-    return;
-  }
-
-  S.isSwitchingChain = true;
-  toast(`⏳ Beralih ke ${newChain.name}...`, "info", 5000);
-
-  // FIRST: Switch wallet
-  if (S.account && window.ethereum) {
-    const switched = await requestWalletChainSwitch(key);
-    if (!switched) {
-      S.isSwitchingChain = false;
-      toast(`❌ Gagal beralih ke ${newChain.name}`, "err");
-      return;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-  }
-
-  // SECOND: Update state
-  const oldChainKey = S.activeChainKey;
-  S.activeChainKey = key;
-  save("chainKey", key);
-  resetChainDependentState();
-  await reinitializeAfterChainSwitch();
-
-  // THIRD: Update URL (setelah switch berhasil)
-  updateUrlForChain(key, preserveParams);
-
-  if (S.account && window.ethereum) {
-    await refreshWalletAfterChainSwitch();
-  }
-
-  S.isSwitchingChain = false;
-  toast(`✅ Berhasil beralih ke ${CHAIN().name}`, "ok");
-  console.log(`✨ Chain switched: ${oldChainKey} → ${key}`);
+function closeMobMenu() {
+  const mobMenu = $("mobMenu");
+  const mobOverlay = $("mobOverlay");
+  const burgerBtn = $("burgerBtn");
+  if (mobMenu) mobMenu.classList.remove("open");
+  if (mobOverlay) mobOverlay.classList.remove("show");
+  if (burgerBtn) burgerBtn.classList.remove("open");
 }
 
-// ─── navTo ──────────────────────────────────
+// ─── NAVIGATION ─────────────────────────────────────────────────────────────
 function navTo(page) {
   document
     .querySelectorAll(".page")
@@ -290,20 +364,13 @@ function navTo(page) {
   const pg = $("page-" + page);
   if (pg) pg.classList.add("active");
   if (page === "pool") loadPositions();
-
-  updatePageUrlFromUI();
 }
 
-// ─── applyUrlParams ───────────────────
+// ─── URL PARAMETERS ─────────────────────────────────────────────────────────
 async function applyUrlParams() {
   const params = new URLSearchParams(window.location.search);
-  const inputCurrency = params.get("inputCurrency"),
-    outputCurrency = params.get("outputCurrency"),
-    page = params.get("page");
-
-  if (page && ["swap", "liquidity", "pool"].includes(page)) {
-    navTo(page);
-  }
+  const inputCurrency = params.get("inputCurrency");
+  const outputCurrency = params.get("outputCurrency");
 
   if (inputCurrency || outputCurrency) {
     await new Promise((r) => setTimeout(r, 800));
@@ -329,40 +396,12 @@ async function applyUrlParams() {
   }
 }
 
-function updateTokenParamsInUrl() {
-  const params = new URLSearchParams();
-  if (S.tIn && !S.tIn.isNative) {
-    params.set("inputCurrency", S.tIn.address);
-  } else if (S.tIn && S.tIn.isNative) {
-    params.set("inputCurrency", CHAIN().symbol.toLowerCase());
-  }
-  if (S.tOut && !S.tOut.isNative) {
-    params.set("outputCurrency", S.tOut.address);
-  } else if (S.tOut && S.tOut.isNative) {
-    params.set("outputCurrency", CHAIN().symbol.toLowerCase());
-  }
-
-  const currentPage = getCurrentPageFromUI();
-  let newPath = `/${S.activeChainKey}`;
-  if (currentPage !== "swap") {
-    newPath += `/${currentPage}`;
-  }
-
-  const paramStr = params.toString();
-  const newUrl = newPath + (paramStr ? "?" + paramStr : "");
-  window.history.pushState(
-    { chainKey: S.activeChainKey, page: currentPage },
-    "",
-    newUrl,
-  );
-}
-
 function resolveUrlToken(value) {
   if (!value) return null;
   const lower = value.toLowerCase();
   const nativeSymbols = ["native", "eth", "bnb", "ric"];
   if (nativeSymbols.includes(lower)) {
-    return makeNativeToken(S.activeChainKey);
+    return makeNativeToken();
   }
   const all = allToks();
   const found = all.find((t) => t.address.toLowerCase() === lower);
@@ -374,7 +413,141 @@ function resolveUrlToken(value) {
   return null;
 }
 
-// selectTok
+// ─── TOKEN MODAL ─────────────────────────────────────────────────────────────
+function openTokModal(ctx) {
+  S.modalCtx = ctx;
+  $("tokSearch").value = "";
+  $("clearSearch").style.display = "none";
+  renderTokList("");
+  openModal("tokModalWrap");
+  setTimeout(() => $("tokSearch").focus(), 150);
+}
+
+function closeTokModal() {
+  closeModal("tokModalWrap");
+  S.modalCtx = null;
+}
+
+function renderTokList(q) {
+  const all = allToks();
+  const search = q.trim().toLowerCase();
+  const list = search
+    ? all.filter(
+        (t) =>
+          t.symbol.toLowerCase().includes(search) ||
+          t.name.toLowerCase().includes(search) ||
+          t.address.toLowerCase().includes(search),
+      )
+    : all;
+
+  let otherAddr = null;
+  const ctx = S.modalCtx;
+  if (ctx === "in" && S.tOut) otherAddr = S.tOut.address.toLowerCase();
+  if (ctx === "out" && S.tIn) otherAddr = S.tIn.address.toLowerCase();
+  if (ctx === "liqA" && S.liqB) otherAddr = S.liqB.address.toLowerCase();
+  if (ctx === "liqB" && S.liqA) otherAddr = S.liqA.address.toLowerCase();
+  if (ctx === "importA" && S.importB)
+    otherAddr = S.importB.address.toLowerCase();
+  if (ctx === "importB" && S.importA)
+    otherAddr = S.importA.address.toLowerCase();
+
+  const chips = $("commonChips");
+  chips.innerHTML = "";
+  all.slice(0, 8).forEach((t) => {
+    const disabled = otherAddr && t.address.toLowerCase() === otherAddr;
+    const b = document.createElement("button");
+    b.className = "tok-chip" + (disabled ? " disabled" : "");
+    b.disabled = !!disabled;
+    const logoHtml = t.logoURI
+      ? `<img src="${t.logoURI}" onerror="this.style.display='none'" alt=""/>`
+      : "";
+    b.innerHTML = logoHtml + escHtml(t.symbol);
+    if (!disabled) b.addEventListener("click", () => selectTok(t));
+    chips.appendChild(b);
+  });
+
+  const inner = $("tokListInner");
+  inner.innerHTML = "";
+
+  if (
+    search.startsWith("0x") &&
+    search.length === 42 &&
+    !all.find((x) => x.address.toLowerCase() === search)
+  ) {
+    fetchAddrToken(search);
+  }
+
+  if (!list.length) {
+    inner.innerHTML = '<div class="loading-row">No tokens found</div>';
+    return;
+  }
+
+  list.forEach((t) => {
+    const disabled = otherAddr && t.address.toLowerCase() === otherAddr;
+    const safeId = "tbal_" + t.address.replace(/[^a-zA-Z0-9]/g, "_");
+    const row = document.createElement("div");
+    row.className = "tok-item" + (disabled ? " tok-disabled" : "");
+    const ico = t.logoURI
+      ? `<div class="tok-ico"><img src="${t.logoURI}" alt="" onerror="this.style.display='none';this.parentNode.textContent='${escHtml(t.symbol.slice(0, 2))}'"/></div>`
+      : `<div class="tok-ico">${escHtml(t.symbol.slice(0, 2))}</div>`;
+    row.innerHTML = `${ico}<div class="tok-inf"><div class="tok-sym">${escHtml(t.symbol)}${disabled ? ' <span class="tok-used">Selected</span>' : ""}</div><div class="tok-name">${escHtml(t.name)}</div></div><div class="tok-bal" id="${safeId}">—</div>`;
+    if (!disabled) row.addEventListener("click", () => selectTok(t));
+    inner.appendChild(row);
+
+    if (S.account && !disabled) {
+      getBal(t, S.account)
+        .then((b) => {
+          const el = document.getElementById(safeId);
+          if (el) el.textContent = fmt(b, t.decimals, 4);
+        })
+        .catch(() => {});
+    }
+  });
+}
+
+async function fetchAddrToken(addr) {
+  try {
+    const c = erc20(addr);
+    const [name, sym, dec] = await Promise.all([
+      c.name(),
+      c.symbol(),
+      c.decimals(),
+    ]);
+    const t = {
+      address: addr,
+      name,
+      symbol: sym,
+      decimals: dec,
+      logoURI: "",
+      isNative: false,
+      chainKey: "riche",
+    };
+    if (
+      !S.allTokens.find((x) => x.address.toLowerCase() === addr.toLowerCase())
+    )
+      S.allTokens.push(t);
+    const inner = $("tokListInner");
+    if (!inner) return;
+    const row = document.createElement("div");
+    row.className = "tok-item";
+    row.innerHTML = `<div class="tok-ico">${escHtml(sym.slice(0, 2))}</div><div class="tok-inf"><div class="tok-sym">${escHtml(sym)} <span style="font-size:10px;color:var(--yellow);margin-left:4px">Custom</span></div><div class="tok-name">${escHtml(name)} · ${short(addr)}</div></div>`;
+    row.addEventListener("click", () => {
+      if (
+        !S.customTokens.find(
+          (x) => x.address.toLowerCase() === addr.toLowerCase(),
+        )
+      ) {
+        S.customTokens.push(t);
+        save("custom", S.customTokens);
+      }
+      selectTok(t);
+    });
+    inner.insertBefore(row, inner.firstChild);
+  } catch (e) {
+    console.warn("fetchAddrToken failed:", e);
+  }
+}
+
 function selectTok(t) {
   const ctx = S.modalCtx;
   if (!ctx) return;
@@ -425,842 +598,21 @@ function selectTok(t) {
     checkImport();
   }
   refreshBals();
-  updateTokenParamsInUrl();
 }
 
-// updateInUI
+// ─── UPDATE UI FUNCTIONS ────────────────────────────────────────────────────
 function updateInUI() {
   setTokUI("logoIn", "symIn", S.tIn);
   detectWrapMode();
   getQuote();
   updateSwapBtn();
-  updateTokenParamsInUrl();
 }
 
-// updateOutUI
 function updateOutUI() {
   setTokUI("logoOut", "symOut", S.tOut);
   detectWrapMode();
   getQuote();
   updateSwapBtn();
-  updateTokenParamsInUrl();
-}
-
-// ─── PERSIST ─────────────────────────────────────────────────────────────────
-function load(k, def) {
-  try {
-    const v = localStorage.getItem("rdex_" + k);
-    return v ? JSON.parse(v) : def;
-  } catch {
-    return def;
-  }
-}
-function save(k, v) {
-  try {
-    localStorage.setItem("rdex_" + k, JSON.stringify(v));
-  } catch {}
-}
-
-S.customTokens = load("custom", []);
-S.txns = load("txns", []);
-S.slippage = load("slip", 0.5);
-S.deadline = load("ddl", 20);
-S.activeChainKey = load("chainKey", "bsc");
-
-// ─── CHAIN ACCESSORS ─────────────────────────────────────────────────────────
-function CHAIN() {
-  return CHAINS[S.activeChainKey];
-}
-function C() {
-  return CHAIN();
-}
-function getChainByKey(key) {
-  const chain = CHAINS[key];
-  if (!chain || !chain.id || !chain.hex) {
-    console.error("Chain tidak valid:", key);
-    return null;
-  }
-  return chain;
-}
-function allToks() {
-  return [
-    ...S.allTokens,
-    ...S.customTokens.filter((t) => t.chainKey === S.activeChainKey),
-  ];
-}
-function routeAddr(t) {
-  return t.isNative ? CHAIN().WNATIVE : t.address;
-}
-
-// ─── BUILT-IN TOKENS ─────────────────────────────────────────────────────────
-function makeNativeToken(chainKey) {
-  const ch = CHAINS[chainKey];
-  return {
-    address: "NATIVE",
-    symbol: ch.symbol,
-    name: ch.name,
-    decimals: 18,
-    logoURI: ch.WNATIVE_LOGO,
-    isNative: true,
-    chainKey,
-  };
-}
-function makeWrappedToken(chainKey) {
-  const ch = CHAINS[chainKey];
-  return {
-    address: ch.WNATIVE,
-    symbol: ch.WNATIVE_SYMBOL,
-    name: ch.WNATIVE_NAME,
-    decimals: 18,
-    logoURI: ch.WNATIVE_LOGO,
-    isNative: false,
-    chainKey,
-  };
-}
-
-// ─── ABIs ─────────────────────────────────────────────────────────────────────
-const ERC20_ABI = [
-  "function name() view returns (string)",
-  "function symbol() view returns (string)",
-  "function decimals() view returns (uint8)",
-  "function balanceOf(address) view returns (uint256)",
-  "function allowance(address,address) view returns (uint256)",
-  "function approve(address,uint256) returns (bool)",
-];
-const WETH_ABI = [
-  ...ERC20_ABI,
-  "function deposit() payable",
-  "function withdraw(uint256)",
-];
-const FACTORY_ABI = [
-  "function getPair(address,address) view returns (address)",
-  "function allPairs(uint256) view returns (address)",
-  "function allPairsLength() view returns (uint256)",
-];
-const PAIR_ABI = [
-  "function token0() view returns (address)",
-  "function token1() view returns (address)",
-  "function getReserves() view returns (uint112,uint112,uint32)",
-  "function totalSupply() view returns (uint256)",
-  "function balanceOf(address) view returns (uint256)",
-  "function allowance(address,address) view returns (uint256)",
-  "function approve(address,uint256) returns (bool)",
-];
-const ROUTER_ABI = [
-  "function WETH() view returns (address)",
-  "function getAmountsOut(uint256,address[]) view returns (uint256[])",
-  "function swapExactETHForTokens(uint256,address[],address,uint256) payable returns (uint256[])",
-  "function swapExactTokensForETH(uint256,uint256,address[],address,uint256) returns (uint256[])",
-  "function swapExactTokensForTokens(uint256,uint256,address[],address,uint256) returns (uint256[])",
-  "function addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256) returns (uint256,uint256,uint256)",
-  "function addLiquidityETH(address,uint256,uint256,uint256,address,uint256) payable returns (uint256,uint256,uint256)",
-  "function removeLiquidity(address,address,uint256,uint256,uint256,address,uint256) returns (uint256,uint256)",
-  "function removeLiquidityETH(address,uint256,uint256,uint256,address,uint256) returns (uint256,uint256)",
-];
-
-// ─── PROVIDERS ───────────────────────────────────────────────────────────────
-const readProv = () => new ethers.providers.JsonRpcProvider(CHAIN().rpc);
-const router = (sp) =>
-  new ethers.Contract(CHAIN().ROUTER, ROUTER_ABI, sp || readProv());
-const factory = (sp) =>
-  new ethers.Contract(CHAIN().FACTORY, FACTORY_ABI, sp || readProv());
-const erc20 = (a, sp) => new ethers.Contract(a, ERC20_ABI, sp || readProv());
-const wethC = (sp) =>
-  new ethers.Contract(CHAIN().WNATIVE, WETH_ABI, sp || readProv());
-const pairC = (a, sp) => new ethers.Contract(a, PAIR_ABI, sp || readProv());
-
-// ─── UTILS ───────────────────────────────────────────────────────────────────
-function short(a) {
-  return a ? a.slice(0, 6) + "…" + a.slice(-4) : "";
-}
-function fmt(bn, dec = 18, dp = 6) {
-  if (!bn) return "0";
-  try {
-    const n = parseFloat(ethers.utils.formatUnits(bn, dec));
-    if (n === 0) return "0";
-    if (n < 0.000001) return "<0.000001";
-    return n.toFixed(dp).replace(/\.?0+$/, "");
-  } catch {
-    return "0";
-  }
-}
-function parse(v, dec = 18) {
-  try {
-    return ethers.utils.parseUnits(String(v || "0"), dec);
-  } catch {
-    return ethers.BigNumber.from(0);
-  }
-}
-function ddl() {
-  return Math.floor(Date.now() / 1000) + S.deadline * 60;
-}
-function minAmt(bn) {
-  const bps = Math.floor(10000 - S.slippage * 100);
-  return bn.mul(bps).div(10000);
-}
-function minAmtLiq(bn) {
-  const bps = Math.floor(10000 - S.liqSlippage * 100);
-  return bn.mul(bps).div(10000);
-}
-function isWrapUnwrapPair(tA, tB) {
-  if (!tA || !tB) return false;
-  const wnLower = CHAIN().WNATIVE.toLowerCase();
-  const aIsNative = tA.isNative;
-  const bIsNative = tB.isNative;
-  const aIsWrapped = !tA.isNative && tA.address.toLowerCase() === wnLower;
-  const bIsWrapped = !tB.isNative && tB.address.toLowerCase() === wnLower;
-  return (aIsNative && bIsWrapped) || (aIsWrapped && bIsNative);
-}
-
-// ─── UI HELPERS ──────────────────────────────────────────────────────────────
-function $(id) {
-  return document.getElementById(id);
-}
-function showTx(t, s) {
-  $("txTitle").textContent = t || "Processing…";
-  $("txMsg").textContent = s || "Confirm in wallet";
-  $("txMask").classList.add("show");
-}
-function hideTx() {
-  $("txMask").classList.remove("show");
-}
-function toast(msg, type = "info", ms = 4000) {
-  const el = document.createElement("div");
-  el.className = "toast " + type;
-  el.innerHTML = `<span class="ti"></span><span>${msg}</span>`;
-  $("toastStack").appendChild(el);
-  setTimeout(() => {
-    el.style.animation = "toastOut .3s ease forwards";
-    setTimeout(() => el.remove(), 300);
-  }, ms);
-}
-function openModal(id) {
-  $(id).classList.add("open");
-}
-function closeModal(id) {
-  $(id).classList.remove("open");
-}
-function escHtml(s) {
-  return String(s).replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
-}
-
-// ─── BACKGROUND CANVAS ───────────────────────────────────────────────────────
-function initCanvas() {
-  const c = $("bgCanvas");
-  if (!c) return;
-  const ctx = c.getContext("2d");
-  let W,
-    H,
-    particles = [];
-  function resize() {
-    W = c.width = window.innerWidth;
-    H = c.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener("resize", resize);
-  for (let i = 0; i < 60; i++)
-    particles.push({
-      x: Math.random() * 1920,
-      y: Math.random() * 1080,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      r: Math.random() * 1.5 + 0.5,
-      c: Math.random() > 0.5 ? "rgba(0,200,255," : "rgba(148,0,255,",
-    });
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    particles.forEach((p) => {
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.x < 0) p.x = W;
-      if (p.x > W) p.x = 0;
-      if (p.y < 0) p.y = H;
-      if (p.y > H) p.y = 0;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = p.c + "0.7)";
-      ctx.fill();
-    });
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const d = Math.hypot(
-          particles[i].x - particles[j].x,
-          particles[i].y - particles[j].y,
-        );
-        if (d < 120) {
-          ctx.beginPath();
-          ctx.strokeStyle = `rgba(0,200,255,${0.15 * (1 - d / 120)})`;
-          ctx.lineWidth = 0.5;
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.stroke();
-        }
-      }
-    }
-    requestAnimationFrame(draw);
-  }
-  draw();
-}
-
-function closeChainDropdown() {
-  const dd = $("chainDropdown");
-  if (dd) dd.classList.remove("open");
-}
-function updateChainPill() {
-  const ch = CHAIN();
-  const triggerBtn = $("chainTriggerBtn");
-  if (triggerBtn) {
-    triggerBtn.style.setProperty("--chain-color", ch.color);
-    const iconImg = triggerBtn.querySelector(".chain-icon-img");
-    if (iconImg) {
-      iconImg.src = ch.logo;
-      iconImg.alt = ch.shortName;
-    }
-  }
-  const triggerLabel = $("chainTriggerLabel");
-  if (triggerLabel) triggerLabel.textContent = ch.shortName;
-  const pill = $("chainPill");
-  if (pill) {
-    pill.style.borderColor = ch.color;
-    pill.style.color = ch.color;
-    const lbl = pill.querySelector(".chain-label");
-    if (lbl) lbl.textContent = ch.shortName;
-  }
-  const wdNet = $("wdNet");
-  if (wdNet) wdNet.textContent = `${ch.name} · ID ${ch.id}`;
-  if ($("wdBal") && S.account) updateWdBal();
-}
-
-// ─── initChainUI ───────────────────────────
-function initChainUI() {
-  const makeItems = (containerId, closeFn) => {
-    const wrap = $(containerId);
-    if (!wrap) return;
-    wrap.innerHTML = "";
-    Object.keys(CHAINS).forEach((key) => {
-      const ch = CHAINS[key];
-      const btn = document.createElement("button");
-      btn.className =
-        "chain-item-btn" + (key === S.activeChainKey ? " active" : "");
-      btn.dataset.chainKey = key;
-      btn.style.setProperty("--chain-color", ch.color);
-      const logoHtml = `<img class="ci-logo-img" src="${ch.logo}" alt="${ch.shortName}" onerror="this.style.opacity='.4'" />`;
-      btn.innerHTML =
-        logoHtml +
-        '<span class="ci-name">' +
-        ch.shortName +
-        "</span>" +
-        (key === S.activeChainKey
-          ? '<span class="ci-check">&#10003;</span>'
-          : "");
-      btn.addEventListener("click", async () => {
-        await switchActiveChain(key, true);
-        if (closeFn) closeFn();
-      });
-      wrap.appendChild(btn);
-    });
-  };
-  makeItems("chainSelector", closeChainDropdown);
-  makeItems("chainSelectorMob", closeMobMenu);
-  updateChainPill();
-}
-
-// ─── REQUEST SWITCH CHAIN (FIXED) ───────────────────────────────────────────
-async function requestWalletChainSwitch(key) {
-  if (!window.ethereum) {
-    toast("Wallet tidak terdeteksi!", "err");
-    return false;
-  }
-  const ch = getChainByKey(key);
-  if (!ch) {
-    toast(`Chain ${key} tidak dikenali`, "err");
-    return false;
-  }
-  const chainIdHex = ch.hex.toLowerCase();
-  try {
-    console.log(`🔄 Mencoba beralih ke ${ch.name} (ID: ${chainIdHex})`);
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: chainIdHex }],
-    });
-    console.log(`✅ Berhasil beralih ke ${ch.name}`);
-    return true;
-  } catch (switchError) {
-    if (switchError.code === 4902) {
-      console.log(`➕ Menambahkan chain ${ch.name} ke wallet...`);
-      try {
-        await window.ethereum.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: chainIdHex,
-              chainName: ch.name,
-              rpcUrls: [ch.rpc],
-              nativeCurrency: {
-                name: ch.symbol,
-                symbol: ch.symbol,
-                decimals: ch.decimals || 18,
-              },
-              blockExplorerUrls: [ch.explorer],
-            },
-          ],
-        });
-        console.log(`✅ Chain ${ch.name} berhasil ditambahkan`);
-        return true;
-      } catch (addError) {
-        console.error("Gagal menambah chain:", addError);
-        if (
-          addError.message &&
-          addError.message.includes("same RPC endpoint")
-        ) {
-          toast(
-            `Jaringan ${ch.name} sudah ada. Silakan pilih manual di wallet.`,
-            "warn",
-          );
-        } else {
-          toast(
-            `Gagal menambah chain: ${addError.message || "Unknown error"}`,
-            "err",
-          );
-        }
-        return false;
-      }
-    }
-    if (switchError.code === 4001) {
-      toast("Anda menolak pergantian jaringan di wallet", "warn");
-      return false;
-    }
-    console.error("Switch chain error:", switchError);
-    toast(
-      `Gagal beralih jaringan: ${switchError.message || "Unknown error"}`,
-      "err",
-    );
-    return false;
-  }
-}
-
-// ─── RESET STATE ────────────────────────────────────────────────────────────
-function resetChainDependentState() {
-  S.tIn = null;
-  S.tOut = null;
-  S.liqA = null;
-  S.liqB = null;
-  S.importA = null;
-  S.importB = null;
-  S.positions = [];
-  S.allTokens = [];
-  if (S.quoteTimer) {
-    clearTimeout(S.quoteTimer);
-    S.quoteTimer = null;
-  }
-  const amountIn = $("amountIn"),
-    amountOut = $("amountOut"),
-    liqAmtA = $("liqAmtA"),
-    liqAmtB = $("liqAmtB");
-  if (amountIn) amountIn.value = "";
-  if (amountOut) amountOut.value = "";
-  if (liqAmtA) liqAmtA.value = "";
-  if (liqAmtB) liqAmtB.value = "";
-  const swapDetails = $("swapDetails");
-  if (swapDetails) swapDetails.style.display = "none";
-  const liqForm = $("liqForm");
-  if (liqForm) liqForm.classList.add("hidden");
-  const liqPrompt = $("liqPrompt");
-  if (liqPrompt) liqPrompt.classList.remove("hidden");
-}
-
-// ─── REINITIALIZE AFTER SWITCH ──────────────────────────────────────────────
-async function reinitializeAfterChainSwitch() {
-  initChainUI();
-  initBaseTokens();
-  await loadTokenList();
-  S.customTokens
-    .filter((t) => (t.chainKey || "bsc") === S.activeChainKey)
-    .forEach((t) => {
-      const a = t.address.toLowerCase();
-      if (!S.allTokens.find((x) => x.address.toLowerCase() === a))
-        S.allTokens.push(t);
-    });
-  updateInUI();
-  updateOutUI();
-  updateLiqUI();
-  updateSwapBtn();
-  updateAddLiqBtn();
-  renderPositions([]);
-  const balIn = $("balIn"),
-    balOut = $("balOut"),
-    liqBalA = $("liqBalA"),
-    liqBalB = $("liqBalB");
-  if (balIn) balIn.textContent = "Balance: —";
-  if (balOut) balOut.textContent = "Balance: —";
-  if (liqBalA) liqBalA.textContent = "Balance: —";
-  if (liqBalB) liqBalB.textContent = "Balance: —";
-  const tokModal = $("tokModalWrap");
-  if (tokModal && tokModal.classList.contains("open")) {
-    const searchInput = $("tokSearch");
-    renderTokList(searchInput ? searchInput.value : "");
-  }
-}
-
-// ─── REFRESH WALLET AFTER SWITCH ────────────────────────────────────────────
-async function refreshWalletAfterChainSwitch() {
-  try {
-    S.provider = new ethers.providers.Web3Provider(window.ethereum);
-    S.signer = S.provider.getSigner();
-    const network = await S.provider.getNetwork();
-    if (network.chainId !== CHAIN().id) {
-      console.warn(`Network mismatch`);
-      S.chainOk = false;
-      return;
-    }
-    S.chainOk = true;
-    await refreshBals();
-    await loadPositions();
-    await updateWdBal();
-    console.log("✅ Wallet data refreshed for new chain");
-  } catch (error) {
-    console.error("Failed to refresh wallet:", error);
-    S.chainOk = false;
-    S.provider = null;
-    S.signer = null;
-  }
-}
-
-// ─── BASE TOKEN INIT ─────────────────────────────────────────────────────────
-function initBaseTokens() {
-  const key = S.activeChainKey;
-  const native = makeNativeToken(key);
-  const wrapped = makeWrappedToken(key);
-  S.allTokens = [native, wrapped];
-  const seen = new Set([
-    native.address.toLowerCase(),
-    wrapped.address.toLowerCase(),
-  ]);
-  S.customTokens
-    .filter((t) => (t.chainKey || "bsc") === key)
-    .forEach((t) => {
-      if (!seen.has(t.address.toLowerCase())) {
-        S.allTokens.push(t);
-        seen.add(t.address.toLowerCase());
-      }
-    });
-}
-
-// ─── TOKEN LIST ──────────────────────────────────────────────────────────────
-async function loadTokenList() {
-  const url = CHAIN().TOKEN_LIST_URL;
-  if (!url) return;
-  const urls = [
-    url,
-    "https://corsproxy.io/?" + encodeURIComponent(url),
-    "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
-  ];
-  let data = null;
-  for (const u of urls) {
-    try {
-      const res = await fetch(u, { cache: "no-cache" });
-      if (!res.ok) continue;
-      data = await res.json();
-      if (data && Array.isArray(data.tokens)) break;
-      data = null;
-    } catch (e) {
-      data = null;
-    }
-  }
-  if (!data || !Array.isArray(data.tokens)) return;
-  const ch = CHAIN();
-  const wnLower = ch.WNATIVE.toLowerCase();
-  const seen = new Set(S.allTokens.map((t) => t.address.toLowerCase()));
-  data.tokens
-    .filter((t) => !t.chainId || t.chainId === ch.id)
-    .forEach((t) => {
-      const addr = (t.address || "").toLowerCase();
-      if (!addr || addr === wnLower || seen.has(addr)) return;
-      S.allTokens.push({
-        address: t.address,
-        symbol: t.symbol || "???",
-        name: t.name || t.symbol || "???",
-        decimals: t.decimals ?? 18,
-        logoURI: t.logoURI || "",
-        isNative: false,
-        chainKey: S.activeChainKey,
-      });
-      seen.add(addr);
-    });
-  if ($("tokModalWrap").classList.contains("open"))
-    renderTokList($("tokSearch").value);
-}
-
-async function fetchAndSetUrlToken(addr) {
-  try {
-    const c = erc20(addr);
-    const [name, sym, dec] = await Promise.all([
-      c.name(),
-      c.symbol(),
-      c.decimals(),
-    ]);
-    const t = {
-      address: addr,
-      name,
-      symbol: sym,
-      decimals: dec,
-      logoURI: "",
-      isNative: false,
-      chainKey: S.activeChainKey,
-    };
-    S.allTokens.push(t);
-    if (!S.tIn) {
-      S.tIn = t;
-      updateInUI();
-    } else if (!S.tOut) {
-      S.tOut = t;
-      updateOutUI();
-    }
-    refreshBals();
-  } catch (e) {
-    console.warn("fetchAndSetUrlToken failed:", e);
-  }
-}
-
-// ─── WALLET ──────────────────────────────────────────────────────────────────
-async function connectWallet() {
-  if (!window.ethereum) {
-    toast("No wallet detected. Install MetaMask.", "err");
-    return;
-  }
-  try {
-    showTx("Connecting…", "Approve in your wallet");
-    await window.ethereum.request({ method: "eth_requestAccounts" });
-    S.provider = new ethers.providers.Web3Provider(window.ethereum);
-    S.signer = S.provider.getSigner();
-    S.account = await S.signer.getAddress();
-    await ensureChain();
-    closeModal("walletModalWrap");
-    updateWalletUI();
-    refreshBals();
-    loadPositions();
-    toast("Wallet connected!", "ok");
-    hideTx();
-  } catch (e) {
-    hideTx();
-    if (e.code === 4001) toast("Connection rejected.", "warn");
-    else toast("Connect failed: " + (e.message || e), "err");
-  }
-}
-async function ensureChain() {
-  try {
-    const net = await S.provider.getNetwork();
-    if (net.chainId !== CHAIN().id) await switchChainWallet();
-    S.chainOk = true;
-  } catch {
-    S.chainOk = false;
-  }
-}
-async function switchChainWallet() {
-  try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: CHAIN().hex }],
-    });
-  } catch (e) {
-    if (e.code === 4902) {
-      await window.ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [
-          {
-            chainId: CHAIN().hex,
-            chainName: CHAIN().name,
-            rpcUrls: [CHAIN().rpc],
-            nativeCurrency: {
-              name: CHAIN().name,
-              symbol: CHAIN().symbol,
-              decimals: 18,
-            },
-            blockExplorerUrls: [CHAIN().explorer],
-          },
-        ],
-      });
-    } else throw e;
-  }
-}
-function disconnectWallet() {
-  S.provider = null;
-  S.signer = null;
-  S.account = null;
-  S.chainOk = false;
-  updateWalletUI();
-  closeModal("wdWrap");
-  toast("Disconnected.", "info");
-  updateSwapBtn();
-  $("balIn").textContent = "Balance: —";
-  $("balOut").textContent = "Balance: —";
-  $("wdBal").textContent = "0 " + CHAIN().symbol;
-}
-function updateWalletUI() {
-  const wpText = $("wpText");
-  if (S.account) {
-    wpText.textContent = short(S.account);
-    $("wdAddr").textContent = short(S.account);
-    $("wdExplorer").href = CHAIN().explorer + "address/" + S.account;
-    updateWdBal();
-    const mwa = $("mobWalletArea");
-    mwa.innerHTML = `<div class="mob-wallet-info"><span class="mob-addr">${short(S.account)}</span><span class="mob-act">Connected</span></div><button class="ghost-btn" id="mobDisconnectBtn">Disconnect</button>`;
-    $("mobDisconnectBtn")?.addEventListener("click", () => {
-      disconnectWallet();
-      closeMobMenu();
-    });
-  } else {
-    wpText.textContent = "Connect";
-    $("mobWalletArea").innerHTML =
-      `<button class="action-btn" id="mobConnectBtn">Connect Wallet</button>`;
-    $("mobConnectBtn")?.addEventListener("click", () => {
-      openModal("walletModalWrap");
-      closeMobMenu();
-    });
-  }
-}
-async function updateWdBal() {
-  if (!S.account || !S.provider) return;
-  try {
-    const b = await S.provider.getBalance(S.account);
-    $("wdBal").textContent =
-      parseFloat(ethers.utils.formatEther(b)).toFixed(4) + " " + CHAIN().symbol;
-  } catch {}
-}
-
-function closeMobMenu() {
-  $("mobMenu").classList.remove("open");
-  $("mobOverlay").classList.remove("show");
-  $("burgerBtn").classList.remove("open");
-}
-
-// ─── TOKEN MODAL ─────────────────────────────────────────────────────────────
-function openTokModal(ctx) {
-  S.modalCtx = ctx;
-  $("tokSearch").value = "";
-  $("clearSearch").style.display = "none";
-  renderTokList("");
-  openModal("tokModalWrap");
-  setTimeout(() => $("tokSearch").focus(), 150);
-}
-function closeTokModal() {
-  closeModal("tokModalWrap");
-  S.modalCtx = null;
-}
-function renderTokList(q) {
-  const all = allToks();
-  const search = q.trim().toLowerCase();
-  const list = search
-    ? all.filter(
-        (t) =>
-          t.symbol.toLowerCase().includes(search) ||
-          t.name.toLowerCase().includes(search) ||
-          t.address.toLowerCase().includes(search),
-      )
-    : all;
-  let otherAddr = null;
-  const ctx = S.modalCtx;
-  if (ctx === "in" && S.tOut) otherAddr = S.tOut.address.toLowerCase();
-  if (ctx === "out" && S.tIn) otherAddr = S.tIn.address.toLowerCase();
-  if (ctx === "liqA" && S.liqB) otherAddr = S.liqB.address.toLowerCase();
-  if (ctx === "liqB" && S.liqA) otherAddr = S.liqA.address.toLowerCase();
-  if (ctx === "importA" && S.importB)
-    otherAddr = S.importB.address.toLowerCase();
-  if (ctx === "importB" && S.importA)
-    otherAddr = S.importA.address.toLowerCase();
-  const chips = $("commonChips");
-  chips.innerHTML = "";
-  all.slice(0, 8).forEach((t) => {
-    const disabled = otherAddr && t.address.toLowerCase() === otherAddr;
-    const b = document.createElement("button");
-    b.className = "tok-chip" + (disabled ? " disabled" : "");
-    b.disabled = !!disabled;
-    const logoHtml = t.logoURI
-      ? `<img src="${t.logoURI}" onerror="this.style.display='none'" alt=""/>`
-      : "";
-    b.innerHTML = logoHtml + escHtml(t.symbol);
-    if (!disabled) b.addEventListener("click", () => selectTok(t));
-    chips.appendChild(b);
-  });
-  const inner = $("tokListInner");
-  inner.innerHTML = "";
-  if (
-    search.startsWith("0x") &&
-    search.length === 42 &&
-    !all.find((x) => x.address.toLowerCase() === search)
-  )
-    fetchAddrToken(search);
-  if (!list.length) {
-    inner.innerHTML = '<div class="loading-row">No tokens found</div>';
-    return;
-  }
-  list.forEach((t) => {
-    const disabled = otherAddr && t.address.toLowerCase() === otherAddr;
-    const safeId = "tbal_" + t.address.replace(/[^a-zA-Z0-9]/g, "_");
-    const row = document.createElement("div");
-    row.className = "tok-item" + (disabled ? " tok-disabled" : "");
-    const ico = t.logoURI
-      ? `<div class="tok-ico"><img src="${t.logoURI}" alt="" onerror="this.style.display='none';this.parentNode.textContent='${escHtml(t.symbol.slice(0, 2))}'"/></div>`
-      : `<div class="tok-ico">${escHtml(t.symbol.slice(0, 2))}</div>`;
-    row.innerHTML = `${ico}<div class="tok-inf"><div class="tok-sym">${escHtml(t.symbol)}${disabled ? ' <span class="tok-used">Selected</span>' : ""}</div><div class="tok-name">${escHtml(t.name)}</div></div><div class="tok-bal" id="${safeId}">—</div>`;
-    if (!disabled) row.addEventListener("click", () => selectTok(t));
-    inner.appendChild(row);
-    if (S.account && !disabled)
-      getBal(t, S.account)
-        .then((b) => {
-          const el = document.getElementById(safeId);
-          if (el) el.textContent = fmt(b, t.decimals, 4);
-        })
-        .catch(() => {});
-  });
-}
-async function fetchAddrToken(addr) {
-  try {
-    const c = erc20(addr);
-    const [name, sym, dec] = await Promise.all([
-      c.name(),
-      c.symbol(),
-      c.decimals(),
-    ]);
-    const t = {
-      address: addr,
-      name,
-      symbol: sym,
-      decimals: dec,
-      logoURI: "",
-      isNative: false,
-      chainKey: S.activeChainKey,
-    };
-    if (
-      !S.allTokens.find((x) => x.address.toLowerCase() === addr.toLowerCase())
-    )
-      S.allTokens.push(t);
-    const inner = $("tokListInner");
-    if (!inner) return;
-    const row = document.createElement("div");
-    row.className = "tok-item";
-    row.innerHTML = `<div class="tok-ico">${escHtml(sym.slice(0, 2))}</div><div class="tok-inf"><div class="tok-sym">${escHtml(sym)} <span style="font-size:10px;color:var(--yellow);margin-left:4px">Custom</span></div><div class="tok-name">${escHtml(name)} · ${short(addr)}</div></div>`;
-    row.addEventListener("click", () => {
-      if (
-        !S.customTokens.find(
-          (x) => x.address.toLowerCase() === addr.toLowerCase(),
-        )
-      ) {
-        S.customTokens.push(t);
-        save("custom", S.customTokens);
-      }
-      selectTok(t);
-    });
-    inner.insertBefore(row, inner.firstChild);
-  } catch (e) {
-    console.warn("fetchAddrToken failed:", e);
-  }
 }
 
 function setTokUI(logoId, symId, t) {
@@ -1300,38 +652,46 @@ function detectWrapMode() {
     wrapBanner.style.display = "none";
   }
 }
+
+// ─── BALANCE & QUOTE ────────────────────────────────────────────────────────
 async function getBal(t, addr) {
   if (!addr) return ethers.BigNumber.from(0);
   const p = S.provider || readProv();
   return t.isNative ? p.getBalance(addr) : erc20(t.address, p).balanceOf(addr);
 }
+
 async function refreshBals() {
   if (!S.account) return;
-  if (S.tIn)
+  if (S.tIn) {
     getBal(S.tIn, S.account)
       .then((b) => {
         $("balIn").textContent = "Balance: " + fmt(b, S.tIn.decimals, 6);
       })
       .catch(() => {});
-  if (S.tOut)
+  }
+  if (S.tOut) {
     getBal(S.tOut, S.account)
       .then((b) => {
         $("balOut").textContent = "Balance: " + fmt(b, S.tOut.decimals, 6);
       })
       .catch(() => {});
-  if (S.liqA)
+  }
+  if (S.liqA) {
     getBal(S.liqA, S.account)
       .then((b) => {
         $("liqBalA").textContent = "Balance: " + fmt(b, S.liqA.decimals, 6);
       })
       .catch(() => {});
-  if (S.liqB)
+  }
+  if (S.liqB) {
     getBal(S.liqB, S.account)
       .then((b) => {
         $("liqBalB").textContent = "Balance: " + fmt(b, S.liqB.decimals, 6);
       })
       .catch(() => {});
+  }
 }
+
 async function getQuote() {
   const amtStr = $("amountIn").value;
   if (S.isWrapMode) {
@@ -1351,11 +711,13 @@ async function getQuote() {
     updateSwapBtn();
     return;
   }
+
   if (!S.tIn || !S.tOut || !amtStr || parseFloat(amtStr) <= 0) {
     $("amountOut").value = "";
     $("swapDetails").style.display = "none";
     return;
   }
+
   try {
     const prov = S.provider || readProv();
     const r = router(prov);
@@ -1364,11 +726,13 @@ async function getQuote() {
     const outs = await r.getAmountsOut(amtIn, path);
     const amtOut = outs[outs.length - 1];
     $("amountOut").value = fmt(amtOut, S.tOut.decimals, 8);
+
     const rateNum =
       parseFloat(ethers.utils.formatUnits(amtOut, S.tOut.decimals)) /
       parseFloat(amtStr);
     $("swapRate").textContent =
       `1 ${S.tIn.symbol} = ${rateNum.toFixed(6)} ${S.tOut.symbol}`;
+
     try {
       const f = factory(prov);
       const pa = await f.getPair(routeAddr(S.tIn), routeAddr(S.tOut));
@@ -1388,6 +752,7 @@ async function getQuote() {
           impact < 1 ? "imp-low" : impact < 5 ? "imp-mid" : "imp-high";
       }
     } catch {}
+
     $("minRcv").textContent =
       `${fmt(minAmt(amtOut), S.tOut.decimals, 6)} ${S.tOut.symbol}`;
     $("lpFee").textContent =
@@ -1403,12 +768,15 @@ async function getQuote() {
     updateSwapBtn();
   }
 }
+
+// ─── SWAP BUTTON & ACTIONS ───────────────────────────────────────────────────
 function updateSwapBtn() {
   const btn = $("swapBtn");
   const amtIn = $("amountIn").value,
     amtOut = $("amountOut").value;
   btn.onclick = null;
   btn.className = "action-btn";
+
   if (!S.account) {
     btn.textContent = "Connect Wallet";
     btn.disabled = false;
@@ -1449,6 +817,7 @@ function updateSwapBtn() {
   btn.disabled = false;
   btn.onclick = doSwap;
 }
+
 async function doWrapUnwrap() {
   if (!S.signer) {
     openModal("walletModalWrap");
@@ -1464,6 +833,7 @@ async function doWrapUnwrap() {
   const amt = parse(amtStr, 18);
   const isWrapping = S.tIn.isNative;
   const w = wethC(S.signer);
+
   try {
     if (isWrapping) {
       showTx(`Wrap ${CHAIN().symbol}`, "Confirm in wallet");
@@ -1526,6 +896,7 @@ async function doWrapUnwrap() {
     else toast("Error: " + (e.reason || e.message || "Unknown"), "err");
   }
 }
+
 async function doSwap() {
   if (!S.signer) {
     openModal("walletModalWrap");
@@ -1545,6 +916,7 @@ async function doSwap() {
     dl = ddl();
   const path = [routeAddr(S.tIn), routeAddr(S.tOut)];
   const r = router(S.signer);
+
   try {
     showTx("Preparing Swap…", "Checking allowance");
     if (!S.tIn.isNative) {
@@ -1563,14 +935,15 @@ async function doSwap() {
     }
     showTx("Confirm Swap", "Approve in wallet");
     let tx;
-    if (S.tIn.isNative)
+    if (S.tIn.isNative) {
       tx = await r.swapExactETHForTokens(minOut, path, S.account, dl, {
         value: amtIn,
       });
-    else if (S.tOut.isNative)
+    } else if (S.tOut.isNative) {
       tx = await r.swapExactTokensForETH(amtIn, minOut, path, S.account, dl);
-    else
+    } else {
       tx = await r.swapExactTokensForTokens(amtIn, minOut, path, S.account, dl);
+    }
     showTx("Submitted", "Hash: " + short(tx.hash));
     addTx(
       tx.hash,
@@ -1604,6 +977,8 @@ async function doSwap() {
     else toast("Swap error: " + (e.reason || e.message || "Unknown"), "err");
   }
 }
+
+// ─── LIQUIDITY UI ───────────────────────────────────────────────────────────
 function updateLiqUI() {
   const a = S.liqA,
     b = S.liqB;
@@ -1638,6 +1013,7 @@ function updateLiqUI() {
   }
   updateAddLiqBtn();
 }
+
 function setLogo(id, t) {
   const el = $(id);
   if (!el) return;
@@ -1649,6 +1025,7 @@ function setLogo(id, t) {
     el.style.display = "none";
   }
 }
+
 async function checkPoolInfo() {
   if (!S.liqA || !S.liqB) return;
   try {
@@ -1685,6 +1062,7 @@ async function checkPoolInfo() {
     }
   } catch {}
 }
+
 async function onLiqAmtAChange() {
   if (!S.liqA || !S.liqB) return;
   const amtA = $("liqAmtA").value;
@@ -1708,6 +1086,7 @@ async function onLiqAmtAChange() {
   updateAddLiqBtn();
   checkLiqApprovals();
 }
+
 async function checkLiqApprovals() {
   if (!S.account || !S.liqA || !S.liqB) return;
   const amtA = $("liqAmtA").value,
@@ -1715,6 +1094,7 @@ async function checkLiqApprovals() {
   if (!amtA || !amtB) return;
   const row = $("liqApproveRow");
   row.innerHTML = "";
+
   async function mkApproveBtn(tok, amt, label) {
     if (tok.isNative) return;
     try {
@@ -1733,6 +1113,7 @@ async function checkLiqApprovals() {
   await mkApproveBtn(S.liqA, amtA, S.liqA.symbol);
   await mkApproveBtn(S.liqB, amtB, S.liqB.symbol);
 }
+
 async function approveTok(tok, btn) {
   if (!S.signer) return;
   try {
@@ -1749,6 +1130,7 @@ async function approveTok(tok, btn) {
     else toast("Rejected.", "warn");
   }
 }
+
 function updateAddLiqBtn() {
   const btn = $("addLiqBtn");
   btn.onclick = null;
@@ -1774,6 +1156,7 @@ function updateAddLiqBtn() {
   btn.disabled = false;
   btn.onclick = doAddLiq;
 }
+
 async function doAddLiq() {
   if (!S.signer) {
     openModal("walletModalWrap");
@@ -1792,6 +1175,7 @@ async function doAddLiq() {
     minB = minAmtLiq(amtB);
   const r = router(S.signer),
     dl = ddl();
+
   try {
     showTx("Adding Liquidity…", "Confirm in wallet");
     let tx;
@@ -1852,6 +1236,8 @@ async function doAddLiq() {
     else toast("Error: " + (e.reason || e.message || ""), "err");
   }
 }
+
+// ─── POOL POSITIONS ─────────────────────────────────────────────────────────
 async function loadPositions() {
   if (!S.account) {
     $("poolList").innerHTML =
@@ -1860,15 +1246,17 @@ async function loadPositions() {
   }
   $("poolList").innerHTML =
     '<div class="cyber-card empty-pool"><div class="ep-icon" style="animation:spin 1s linear infinite">◈</div><p>Loading…</p></div>';
+
   const f = factory();
   const prov = readProv();
   const positions = [];
   const seenPairs = new Set();
-  const native = makeNativeToken(S.activeChainKey);
+  const native = makeNativeToken();
   const erc20Toks = allToks().filter(
     (t) =>
       !t.isNative && t.address.toLowerCase() !== CHAIN().WNATIVE.toLowerCase(),
   );
+
   const tryPair = async (tA, tB) => {
     try {
       const pa = await f.getPair(routeAddr(tA), routeAddr(tB));
@@ -1913,13 +1301,17 @@ async function loadPositions() {
       console.warn("tryPair error:", e);
     }
   };
+
   for (const t of erc20Toks) await tryPair(native, t);
-  for (let i = 0; i < erc20Toks.length; i++)
-    for (let j = i + 1; j < erc20Toks.length; j++)
+  for (let i = 0; i < erc20Toks.length; i++) {
+    for (let j = i + 1; j < erc20Toks.length; j++) {
       await tryPair(erc20Toks[i], erc20Toks[j]);
+    }
+  }
   S.positions = positions;
   renderPositions(positions);
 }
+
 function renderPositions(pos) {
   const el = $("poolList");
   if (!pos.length) {
@@ -1932,10 +1324,11 @@ function renderPositions(pos) {
     const d = document.createElement("div");
     d.className = "pool-pos";
     const sh = (p.sh.toNumber() / 100).toFixed(4);
-    d.innerHTML = `<div class="pos-hd"><span class="pos-pair">${p.tA.symbol}/${p.tB.symbol}</span><div class="pos-acts"><button class="pos-add" onclick="goAddLiq(${i})">Add</button><button class="pos-rm"  onclick="openRemove(${i})">Remove</button></div></div><div class="pos-data"><div class="pos-row"><span>Your ${p.tA.symbol}</span><span class="mono">${fmt(p.myA, p.tA.decimals, 6)}</span></div><div class="pos-row"><span>Your ${p.tB.symbol}</span><span class="mono">${fmt(p.myB, p.tB.decimals, 6)}</span></div><div class="pos-row"><span>Pool Share</span><span class="mono">${sh}%</span></div><div class="pos-row"><span>LP Tokens</span><span class="mono">${fmt(p.lpBal, 18, 8)}</span></div><div class="pos-row"><span>Pair</span><span class="mono"><a href="${CHAIN().explorer}address/${p.pa}" target="_blank" style="color:var(--cyan);text-decoration:none">${short(p.pa)} 🔍</a></span></div></div>`;
+    d.innerHTML = `<div class="pos-hd"><span class="pos-pair">${p.tA.symbol}/${p.tB.symbol}</span><div class="pos-acts"><button class="pos-add" onclick="goAddLiq(${i})">Add</button><button class="pos-rm" onclick="openRemove(${i})">Remove</button></div></div><div class="pos-data"><div class="pos-row"><span>Your ${p.tA.symbol}</span><span class="mono">${fmt(p.myA, p.tA.decimals, 6)}</span></div><div class="pos-row"><span>Your ${p.tB.symbol}</span><span class="mono">${fmt(p.myB, p.tB.decimals, 6)}</span></div><div class="pos-row"><span>Pool Share</span><span class="mono">${sh}%</span></div><div class="pos-row"><span>LP Tokens</span><span class="mono">${fmt(p.lpBal, 18, 8)}</span></div><div class="pos-row"><span>Pair</span><span class="mono"><a href="${CHAIN().explorer}address/${p.pa}" target="_blank" style="color:var(--cyan);text-decoration:none">${short(p.pa)} 🔍</a></span></div></div>`;
     el.appendChild(d);
   });
 }
+
 window.goAddLiq = (i) => {
   const p = S.positions[i];
   if (!p) return;
@@ -1944,6 +1337,7 @@ window.goAddLiq = (i) => {
   navTo("liquidity");
   setTimeout(updateLiqUI, 50);
 };
+
 window.openRemove = (i) => {
   S.currentPos = i;
   const p = S.positions[i];
@@ -1953,6 +1347,7 @@ window.openRemove = (i) => {
   updateRemoveOutput(50);
   openModal("removeMWrap");
 };
+
 function updateRemoveOutput(pct) {
   S.removePct = pct;
   const p = S.positions[S.currentPos];
@@ -1968,6 +1363,7 @@ function updateRemoveOutput(pct) {
     btn.onclick = () => doRemoveLiq(pct);
   }
 }
+
 async function approveLP() {
   const p = S.positions[S.currentPos];
   if (!p || !S.signer) return;
@@ -1985,6 +1381,7 @@ async function approveLP() {
     toast("LP approval failed.", "err");
   }
 }
+
 async function doRemoveLiq(pct) {
   const p = S.positions[S.currentPos];
   if (!p || !S.signer) return;
@@ -1998,6 +1395,7 @@ async function doRemoveLiq(pct) {
   const minB = minAmtLiq(p.myB.mul(pct).div(100));
   const r = router(S.signer),
     dl = ddl();
+
   try {
     showTx("Removing Liquidity…", "Confirm in wallet");
     let tx;
@@ -2044,6 +1442,8 @@ async function doRemoveLiq(pct) {
     else toast("Error: " + (e.reason || e.message || ""), "err");
   }
 }
+
+// ─── IMPORT POOL ────────────────────────────────────────────────────────────
 async function checkImport() {
   if (!S.importA || !S.importB) return;
   const d = $("importDetails"),
@@ -2052,6 +1452,7 @@ async function checkImport() {
   d.innerHTML =
     '<div class="detail-row"><span style="color:var(--txt2)">Searching for pool…</span></div>';
   btn.disabled = true;
+
   try {
     const f = factory();
     const pa = await f.getPair(routeAddr(S.importA), routeAddr(S.importB));
@@ -2082,12 +1483,15 @@ async function checkImport() {
     d.innerHTML = `<div class="detail-row" style="color:var(--red)"><span>Error: ${escHtml(e.reason || e.message || "Unknown")}</span></div>`;
   }
 }
+
+// ─── TRANSACTIONS ───────────────────────────────────────────────────────────
 function addTx(h, l, s) {
   S.txns.unshift({ h, l, s, t: Date.now() });
   if (S.txns.length > 8) S.txns.pop();
   save("txns", S.txns);
   renderTxns();
 }
+
 function updTx(h, s) {
   const t = S.txns.find((x) => x.h === h);
   if (t) {
@@ -2096,6 +1500,7 @@ function updTx(h, s) {
     renderTxns();
   }
 }
+
 function renderTxns() {
   const el = $("txsList");
   if (!S.txns.length) {
@@ -2113,6 +1518,8 @@ function renderTxns() {
     el.appendChild(d);
   });
 }
+
+// ─── CUSTOM TOKENS ──────────────────────────────────────────────────────────
 async function fetchCustomPreview(addr) {
   if (!addr.startsWith("0x") || addr.length !== 42) {
     $("customPreview").classList.add("hidden");
@@ -2136,25 +1543,22 @@ async function fetchCustomPreview(addr) {
       decimals: dec,
       logoURI: "",
       isNative: false,
-      chainKey: S.activeChainKey,
+      chainKey: "riche",
     };
   } catch {
     $("customPreview").classList.add("hidden");
     return null;
   }
 }
+
 function renderCustomToks() {
   const el = $("customTokList");
-  const chainToks = S.customTokens.filter(
-    (t) => (t.chainKey || "bsc") === S.activeChainKey,
-  );
-  if (!chainToks.length) {
+  if (!S.customTokens.length) {
     el.innerHTML = '<p class="empty-msg">None added</p>';
     return;
   }
   el.innerHTML = "";
-  chainToks.forEach((t) => {
-    const globalIdx = S.customTokens.indexOf(t);
+  S.customTokens.forEach((t, globalIdx) => {
     const d = document.createElement("div");
     d.className = "tok-item";
     d.innerHTML = `<div class="tok-ico">${t.symbol.slice(0, 2)}</div><div class="tok-inf"><div class="tok-sym">${t.symbol}</div><div class="tok-name">${t.name}</div></div><button class="del-tok" data-i="${globalIdx}" title="Remove">✕</button>`;
@@ -2171,49 +1575,213 @@ function renderCustomToks() {
     el.appendChild(d);
   });
 }
-async function checkCurrentChainStatus() {
-  if (!window.ethereum) {
-    console.log("❌ No wallet detected");
-    return null;
-  }
-  try {
-    const chainIdHex = await window.ethereum.request({ method: "eth_chainId" });
-    const chainId = parseInt(chainIdHex, 16);
-    const matchedChain = Object.values(CHAINS).find((ch) => ch.id === chainId);
-    console.log("📊 Chain Status:");
-    console.log("  - Hex ID:", chainIdHex);
-    console.log("  - Decimal ID:", chainId);
-    console.log("  - Matched:", matchedChain ? matchedChain.name : "Unknown");
-    console.log("  - Active in App:", CHAIN().name);
-    return { chainIdHex, chainId, matchedChain };
-  } catch (error) {
-    console.error("Failed to check chain:", error);
-    return null;
-  }
-}
-window.debugChain = checkCurrentChainStatus;
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", async () => {
- restoreOriginalPath();
-  var initialized = await initializeFromUrlPath();
-  if (!initialized) return;
-  const pathname = window.location.pathname;
-  if (pathname === "/" || pathname === "") {
-    window.location.replace(
-      "/bsc" + window.location.search + window.location.hash,
-    );
+// ─── WALLET ──────────────────────────────────────────────────────────────────
+async function connectWallet() {
+  if (!window.ethereum) {
+    toast("No wallet detected. Install MetaMask.", "err");
     return;
   }
-
-  initCanvas();
-
-  const pathChain = getChainFromPath();
-  if (pathChain) {
-    S.activeChainKey = pathChain;
-    save("chainKey", pathChain);
+  try {
+    showTx("Connecting…", "Approve in your wallet");
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+    S.provider = new ethers.providers.Web3Provider(window.ethereum);
+    S.signer = S.provider.getSigner();
+    S.account = await S.signer.getAddress();
+    await ensureChain();
+    closeModal("walletModalWrap");
+    updateWalletUI();
+    refreshBals();
+    loadPositions();
+    toast("Wallet connected!", "ok");
+    hideTx();
+  } catch (e) {
+    hideTx();
+    if (e.code === 4001) toast("Connection rejected.", "warn");
+    else toast("Connect failed: " + (e.message || e), "err");
   }
+}
 
+async function ensureChain() {
+  try {
+    const net = await S.provider.getNetwork();
+    if (net.chainId !== CHAIN().id) await switchChainWallet();
+    S.chainOk = true;
+  } catch {
+    S.chainOk = false;
+  }
+}
+
+async function switchChainWallet() {
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: CHAIN().hex }],
+    });
+  } catch (e) {
+    if (e.code === 4902) {
+      await window.ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: CHAIN().hex,
+            chainName: CHAIN().name,
+            rpcUrls: [CHAIN().rpc],
+            nativeCurrency: {
+              name: CHAIN().name,
+              symbol: CHAIN().symbol,
+              decimals: 18,
+            },
+            blockExplorerUrls: [CHAIN().explorer],
+          },
+        ],
+      });
+    } else throw e;
+  }
+}
+
+function disconnectWallet() {
+  S.provider = null;
+  S.signer = null;
+  S.account = null;
+  S.chainOk = false;
+  updateWalletUI();
+  closeModal("wdWrap");
+  toast("Disconnected.", "info");
+  updateSwapBtn();
+  $("balIn").textContent = "Balance: —";
+  $("balOut").textContent = "Balance: —";
+  $("wdBal").textContent = "0 " + CHAIN().symbol;
+}
+
+function updateWalletUI() {
+  const wpText = $("wpText");
+  if (S.account) {
+    wpText.textContent = short(S.account);
+    $("wdAddr").textContent = short(S.account);
+    $("wdExplorer").href = CHAIN().explorer + "address/" + S.account;
+    updateWdBal();
+    const mwa = $("mobWalletArea");
+    mwa.innerHTML = `<div class="mob-wallet-info"><span class="mob-addr">${short(S.account)}</span><span class="mob-act">Connected</span></div><button class="ghost-btn" id="mobDisconnectBtn">Disconnect</button>`;
+    $("mobDisconnectBtn")?.addEventListener("click", () => {
+      disconnectWallet();
+      closeMobMenu();
+    });
+  } else {
+    wpText.textContent = "Connect";
+    $("mobWalletArea").innerHTML =
+      `<button class="action-btn" id="mobConnectBtn">Connect Wallet</button>`;
+    $("mobConnectBtn")?.addEventListener("click", () => {
+      openModal("walletModalWrap");
+      closeMobMenu();
+    });
+  }
+}
+
+async function updateWdBal() {
+  if (!S.account || !S.provider) return;
+  try {
+    const b = await S.provider.getBalance(S.account);
+    $("wdBal").textContent =
+      parseFloat(ethers.utils.formatEther(b)).toFixed(4) + " " + CHAIN().symbol;
+  } catch {}
+}
+
+// ─── INITIALIZE TOKEN LIST ───────────────────────────────────────────────────
+async function loadTokenList() {
+  const url = CHAIN().TOKEN_LIST_URL;
+  if (!url) return;
+  const urls = [
+    url,
+    "https://corsproxy.io/?" + encodeURIComponent(url),
+    "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+  ];
+  let data = null;
+  for (const u of urls) {
+    try {
+      const res = await fetch(u, { cache: "no-cache" });
+      if (!res.ok) continue;
+      data = await res.json();
+      if (data && Array.isArray(data.tokens)) break;
+      data = null;
+    } catch (e) {
+      data = null;
+    }
+  }
+  if (!data || !Array.isArray(data.tokens)) return;
+  const ch = CHAIN();
+  const wnLower = ch.WNATIVE.toLowerCase();
+  const seen = new Set(S.allTokens.map((t) => t.address.toLowerCase()));
+  data.tokens
+    .filter((t) => !t.chainId || t.chainId === ch.id)
+    .forEach((t) => {
+      const addr = (t.address || "").toLowerCase();
+      if (!addr || addr === wnLower || seen.has(addr)) return;
+      S.allTokens.push({
+        address: t.address,
+        symbol: t.symbol || "???",
+        name: t.name || t.symbol || "???",
+        decimals: t.decimals ?? 18,
+        logoURI: t.logoURI || "",
+        isNative: false,
+        chainKey: "riche",
+      });
+      seen.add(addr);
+    });
+  if ($("tokModalWrap").classList.contains("open"))
+    renderTokList($("tokSearch").value);
+}
+
+async function fetchAndSetUrlToken(addr) {
+  try {
+    const c = erc20(addr);
+    const [name, sym, dec] = await Promise.all([
+      c.name(),
+      c.symbol(),
+      c.decimals(),
+    ]);
+    const t = {
+      address: addr,
+      name,
+      symbol: sym,
+      decimals: dec,
+      logoURI: "",
+      isNative: false,
+      chainKey: "riche",
+    };
+    S.allTokens.push(t);
+    if (!S.tIn) {
+      S.tIn = t;
+      updateInUI();
+    } else if (!S.tOut) {
+      S.tOut = t;
+      updateOutUI();
+    }
+    refreshBals();
+  } catch (e) {
+    console.warn("fetchAndSetUrlToken failed:", e);
+  }
+}
+
+function initBaseTokens() {
+  const native = makeNativeToken();
+  const wrapped = makeWrappedToken();
+  S.allTokens = [native, wrapped];
+  const seen = new Set([
+    native.address.toLowerCase(),
+    wrapped.address.toLowerCase(),
+  ]);
+  S.customTokens.forEach((t) => {
+    if (!seen.has(t.address.toLowerCase())) {
+      S.allTokens.push(t);
+      seen.add(t.address.toLowerCase());
+    }
+  });
+}
+
+// ─── DOM CONTENT LOADED ──────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", async () => {
+  initCanvas();
   initBaseTokens();
   initChainUI();
   renderTxns();
@@ -2221,17 +1789,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await loadTokenList();
 
-  S.customTokens
-    .filter((t) => (t.chainKey || "bsc") === S.activeChainKey)
-    .forEach((t) => {
-      const a = t.address.toLowerCase();
-      if (!S.allTokens.find((x) => x.address.toLowerCase() === a))
-        S.allTokens.push(t);
-    });
+  S.customTokens.forEach((t) => {
+    const a = t.address.toLowerCase();
+    if (!S.allTokens.find((x) => x.address.toLowerCase() === a))
+      S.allTokens.push(t);
+  });
 
-  // ========== Apply URL params token list loaded ==========
   await applyUrlParams();
 
+  // Event Listeners
   const chainTriggerBtn = $("chainTriggerBtn"),
     chainDropdown = $("chainDropdown");
   if (chainTriggerBtn && chainDropdown) {
@@ -2261,7 +1827,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   $("mobOverlay").addEventListener("click", closeMobMenu);
-
   $("walletBtn").addEventListener("click", () => {
     if (S.account) openModal("wdWrap");
     else openModal("walletModalWrap");
@@ -2482,11 +2047,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     if (
-      S.customTokens.find(
-        (x) =>
-          x.address.toLowerCase() === addr.toLowerCase() &&
-          (x.chainKey || "bsc") === S.activeChainKey,
-      )
+      S.customTokens.find((x) => x.address.toLowerCase() === addr.toLowerCase())
     ) {
       toast("Already added.", "warn");
       return;
@@ -2515,7 +2076,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // ========== WALLET EVENT LISTENERS ==========
+  // Wallet Event Listeners
   if (window.ethereum) {
     window.ethereum.on("accountsChanged", (accs) => {
       if (!accs.length) disconnectWallet();
@@ -2526,39 +2087,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadPositions();
       }
     });
-    window.ethereum.on("chainChanged", async (chainIdHex) => {
-      console.log("🔗 MetaMask chain changed:", chainIdHex);
-
-      // JANGAN CEK S.isSwitchingChain - langsung proses saja
-      const matchedKey = Object.keys(CHAINS).find((k) => {
-        const ch = CHAINS[k];
-        const targetHex = ch.hex.toLowerCase();
-        return targetHex === chainIdHex.toLowerCase();
-      });
-
-      if (matchedKey && matchedKey !== S.activeChainKey) {
-        console.log(`🔄 Syncing UI to chain: ${matchedKey}`);
-        S.activeChainKey = matchedKey;
-        save("chainKey", matchedKey);
-        resetChainDependentState();
-        await reinitializeAfterChainSwitch();
-        if (S.account) {
-          S.provider = new ethers.providers.Web3Provider(window.ethereum);
-          S.signer = S.provider.getSigner();
-          S.chainOk = true;
-          await refreshBals();
-          await loadPositions();
-          await updateWdBal();
-        }
-        toast(`Wallet beralih ke ${CHAIN().name}`, "info");
-      } else if (!matchedKey) {
-        console.warn("Unknown chain detected:", chainIdHex);
-        toast(
-          `Chain ID ${chainIdHex} tidak didukung. Silakan ganti ke chain yang tersedia.`,
-          "warn",
-        );
-      }
-    });
     window.ethereum
       .request({ method: "eth_accounts" })
       .then((accs) => {
@@ -2566,22 +2094,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       })
       .catch(() => {});
   }
-
-  // ========== Handle browser back/forward ==========
-  window.addEventListener("popstate", async () => {
-    const newPathChain = getChainFromPath();
-    if (newPathChain && newPathChain !== S.activeChainKey) {
-      S.activeChainKey = newPathChain;
-      save("chainKey", newPathChain);
-      resetChainDependentState();
-      await reinitializeAfterChainSwitch();
-      if (S.account) {
-        await requestWalletChainSwitch(newPathChain);
-        await refreshWalletAfterChainSwitch();
-      }
-    }
-    await applyUrlParams();
-  });
 
   console.log(
     "🚀 RecehDEX ready | Chain:",
