@@ -2,74 +2,98 @@
 <html lang="en">
 
 <head>
-    <!-- Basic -->
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!-- Title -->
-    <title>RECEH DEX - Crypto Swap, Liquidity & DeFi Trading on Riche Chain</title>
-
-    <!-- SEO Meta -->
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+    <link rel="shortcut icon" type="image/png" href="https://recehdex.github.io/favicon.png" />
+    <title>recehDEX — Trade & Liquidity Token BSC & RicheChain</title>
     <meta name="description"
-        content="RECEH DEX is a decentralized exchange (DEX) for token swaps, liquidity pools, and crypto trading on Riche Chain. Fast, lightweight, and secure DeFi platform." />
-    <meta name="keywords"
-        content="RECEH DEX, crypto DEX, token swap, liquidity pool, decentralized exchange, DeFi trading, Riche Chain, blockchain exchange" />
-    <meta name="author" content="RECEH DEX" />
-    <meta name="robots" content="index, follow" />
+        content="recehDEX adalah platform DEX multichain untuk swap, pair, dan likuiditas token di BNB Smart Chain dan Riche Chain Mainnet. Cepat, ringan, dan mudah digunakan untuk pengujian hingga trading." />
 
-    <!-- Canonical -->
-    <link rel="canonical" href="https://recehdex.github.io/" />
+    <link rel="canonical" href="https://recehdex.github.io/">
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="https://recehdex.github.io/favicon.png" />
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="RECEH DEX - Swap & Liquidity on Riche Chain" />
-    <meta property="og:description"
-        content="Decentralized exchange for token swaps, liquidity pools, and DeFi trading on Riche Chain." />
-    <meta property="og:image" content="https://recehdex.github.io/favicon.png" />
-    <meta property="og:url" content="https://recehdex.github.io/" />
-    <meta property="og:site_name" content="RECEH DEX" />
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="RECEH DEX - Crypto Swap & Liquidity Platform" />
-    <meta name="twitter:description"
-        content="Swap tokens, add liquidity, and trade crypto assets on Riche Chain using RECEH DEX." />
-    <meta name="twitter:image" content="https://recehdex.github.io/favicon.png" />
-
-    <!-- Performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap"
-        rel="stylesheet" />
-
-    <!-- CSS -->
-    <link rel="stylesheet" href="/style.css" />
-
-    <!-- JS -->
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" defer></script>
-
-    <!-- Structured Data (SEO boost) -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "RECEH DEX",
-        "url": "https://recehdex.github.io/",
-        "description": "Decentralized exchange for token swaps, liquidity pools, and DeFi trading on Riche Chain.",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": "https://recehdex.github.io/?q={search_term_string}",
-            "query-input": "required name=search_term_string"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <link rel="stylesheet" href="/style.css?v=3" />
+    <style>
+        .ci-logo-img {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
         }
-    }
-    </script>
+
+        .chain-item-btn .ci-logo {
+            display: none;
+        }
+
+        .modal-wrap {
+            align-items: flex-start !important;
+            padding-top: 20px !important;
+        }
+
+        .modal-wrap .modal {
+            max-height: 85vh !important;
+            margin-top: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        .modal-wrap .modal .modal-hd {
+            flex-shrink: 0;
+        }
+
+        .modal-wrap .modal .modal-search-bar {
+            flex-shrink: 0;
+        }
+
+        .modal-wrap .modal .common-row {
+            flex-shrink: 0;
+        }
+
+        .modal-wrap .modal .modal-div {
+            flex-shrink: 0;
+        }
+
+        .modal-wrap .modal .tok-list-wrap {
+            flex: 1 !important;
+            min-height: 150px !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        .modal-wrap .modal .modal-ft {
+            flex-shrink: 0;
+        }
+
+        body.modal-open {
+            overflow: hidden !important;
+            position: fixed !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        @media (max-width: 600px) {
+            .modal-wrap .modal {
+                max-height: 80vh !important;
+                margin: 0 8px !important;
+                border-radius: 16px !important;
+            }
+
+            .modal-wrap {
+                padding: 8px !important;
+                align-items: flex-start !important;
+                padding-top: 30px !important;
+            }
+
+            .modal-wrap .modal .tok-list-wrap {
+                min-height: 120px !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -87,14 +111,37 @@
             <button class="nav-link active" data-page="swap">Swap</button>
             <button class="nav-link" data-page="liquidity">Liquidity</button>
             <button class="nav-link" data-page="pool">Pool</button>
+            <a class="nav-link ext" href="https://dex.cryptoreceh.com/listing/" target="_blank">Listing</a>
             <a class="nav-link ext" href="https://dex.cryptoreceh.com/info/" target="_blank">PairInfo</a>
-            <a class="nav-link ext" href="https://recehdex.github.io/staking/" target="_blank">Staking</a>
-            <a class="nav-link ext" href="https://recehdex.github.io/token-sale/" target="_blank">TokenSale</a>
+            <a class="nav-link ext" href="https://cryptoreceh.com/staking/" target="_blank">Staking</a>
+            <a class="nav-link ext" href="https://cryptoreceh.com/buy/" target="_blank">TokenSale</a>
             <a class="nav-link ext" href="https://bridge.receh.workers.dev/" target="_blank">Bridge</a>
             <a class="nav-link ext" href="https://app.cryptoreceh.com/" target="_blank">CreateToken</a>
         </div>
 
         <div class="nav-end">
+
+            <div class="chain-dropdown-wrap" id="chainDropdownWrap">
+                <button class="chain-trigger-btn" id="chainTriggerBtn" title="Switch Network">
+
+                    <img src="https://raw.githubusercontent.com/recehdex/recehdex.github.io/refs/heads/main/images/bsc-logo-100x100.png"
+                        class="chain-icon-img" style="width:20px;height:20px;border-radius:50%;object-fit:cover;"
+                        alt="BSC" />
+                    <span class="chain-trigger-label" id="chainTriggerLabel">BSC</span>
+                    <svg class="chain-caret" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="3">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </button>
+                <div class="chain-dropdown" id="chainDropdown">
+                    <div class="chain-dropdown-inner" id="chainSelector"></div>
+                </div>
+            </div>
+
+            <div class="chain-pill sr-only" id="chainPill">
+                <span class="pulse-dot"></span>
+                <span class="chain-label">BSC</span>
+            </div>
 
             <button class="wallet-pill" id="walletBtn">
                 <span class="wp-icon">◈</span>
@@ -111,11 +158,17 @@
         <button class="mob-link active" data-page="swap">⇄&nbsp;&nbsp;Swap</button>
         <button class="mob-link" data-page="liquidity">⊕&nbsp;&nbsp;Liquidity</button>
         <button class="mob-link" data-page="pool">◈&nbsp;&nbsp;Pool</button>
+        <a class="mob-link" href="https://dex.cryptoreceh.com/listing/" target="_blank">↗&nbsp;&nbsp;Listing</a>
         <a class="mob-link" href="https://dex.cryptoreceh.com/info/" target="_blank">↗&nbsp;&nbsp;PairInfo</a>
-        <a class="mob-link" href="https://recehdex.github.io/staking/" target="_blank">↗&nbsp;&nbsp;Staking</a>
-        <a class="mob-link" href="https://recehdex.github.io/token-sale/" target="_blank">↗&nbsp;&nbsp;TokenSale</a>
+        <a class="mob-link" href="https://cryptoreceh.com/staking/" target="_blank">↗&nbsp;&nbsp;Staking</a>
+        <a class="mob-link" href="https://cryptoreceh.com/buy/" target="_blank">↗&nbsp;&nbsp;TokenSale</a>
         <a class="mob-link" href="https://bridge.receh.workers.dev/" target="_blank">↗&nbsp;&nbsp;Bridge</a>
         <a class="mob-link" href="https://app.cryptoreceh.com/" target="_blank">↗&nbsp;&nbsp;CreateToken</a>
+        <div class="mob-sep"></div>
+        <div class="mob-network-row">
+            <span class="mob-net-label">◈ Network</span>
+            <div class="mob-chain-btns" id="chainSelectorMob"></div>
+        </div>
         <div class="mob-sep"></div>
         <div class="mob-wallet-area" id="mobWalletArea">
             <button class="action-btn" id="mobConnectBtn">Connect Wallet</button>
@@ -130,7 +183,7 @@
         <section class="page active" id="page-swap">
             <div class="page-hd">
                 <h1>SWAP</h1>
-                <p>Instant token exchange on Riche Chain</p>
+                <p>Instant token exchange · Multi-Chain</p>
             </div>
             <div class="center-wrap">
                 <div class="cyber-card">
@@ -474,8 +527,9 @@
             </div>
             <div class="wd-body">
                 <div class="wd-addr" id="wdAddr">—</div>
-                <div class="wd-bal" id="wdBal">0 RIC</div>
-                <div class="wd-net" id="wdNet">Riche Chain · ID 132026</div>
+                <div class="wd-bal" id="wdBal">0 BNB</div>
+                <!-- wdNet diupdate JS sesuai chain aktif -->
+                <div class="wd-net" id="wdNet">BNB Smart Chain · ID 56</div>
                 <div class="wd-acts">
                     <a class="wd-act" id="wdExplorer" href="#" target="_blank">View on Explorer ↗</a>
                     <button class="wd-act red" id="disconnectBtn">Disconnect</button>
@@ -587,7 +641,125 @@
     <!-- ====== TOASTS ====== -->
     <div class="toast-stack" id="toastStack"></div>
 
-    <script src="/app.js"></script>
+    <script>
+        // ============================================================
+        // PERBAIKAN UNTUK MODAL TOKEN DI MOBILE
+        // ============================================================
+        (function () {
+
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            if (isMobile) {
+
+                document.addEventListener('DOMContentLoaded', function () {
+
+                    const modalWrap = document.getElementById('tokModalWrap');
+                    const searchInput = document.getElementById('tokSearch');
+                    const modal = document.getElementById('tokModal');
+                    const listWrap = document.getElementById('tokListWrap');
+
+                    if (!modalWrap || !searchInput) return;
+
+                    document.addEventListener('click', function (e) {
+                        const target = e.target.closest('.tok-pick, .pair-btn');
+                        if (!target) return;
+
+                        const isTokenPicker = target.id === 'pickIn' ||
+                            target.id === 'pickOut' ||
+                            target.id === 'liqPickA' ||
+                            target.id === 'liqPickB' ||
+                            target.id === 'liqPickA2' ||
+                            target.id === 'liqPickB2' ||
+                            target.id === 'importPickA' ||
+                            target.id === 'importPickB';
+
+                        if (!isTokenPicker) return;
+
+                        setTimeout(function () {
+
+                            searchInput.focus();
+
+                            setTimeout(function () {
+                                if (listWrap) {
+                                    listWrap.scrollIntoView({
+                                        behavior: 'smooth',
+                                        block: 'start'
+                                    });
+                                }
+                            }, 300);
+                        }, 100);
+                    });
+
+                    searchInput.addEventListener('focus', function () {
+                        setTimeout(function () {
+                            if (listWrap) {
+                                listWrap.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'start'
+                                });
+                            }
+                        }, 300);
+                    });
+
+                    const origOpen = window.openTokenModal;
+                    if (origOpen) {
+                        window.openTokenModal = function (...args) {
+                            const result = origOpen.apply(this, args);
+                            setTimeout(function () {
+                                searchInput.focus();
+                                setTimeout(function () {
+                                    if (listWrap) {
+                                        listWrap.scrollIntoView({
+                                            behavior: 'smooth',
+                                            block: 'start'
+                                        });
+                                    }
+                                }, 300);
+                            }, 150);
+                            return result;
+                        };
+                    }
+
+                    const origModalOpen = modalWrap.style.display;
+                    const observer = new MutationObserver(function () {
+                        if (modalWrap.style.display !== 'none' && modalWrap.style.display !== '') {
+                            document.body.classList.add('modal-open');
+
+                            setTimeout(function () {
+                                if (listWrap) {
+                                    listWrap.scrollIntoView({
+                                        behavior: 'smooth',
+                                        block: 'start'
+                                    });
+                                }
+                            }, 200);
+                        } else {
+                            document.body.classList.remove('modal-open');
+                        }
+                    });
+                    observer.observe(modalWrap, {
+                        attributes: true,
+                        attributeFilter: ['style']
+                    });
+
+                    const closeBtn = document.getElementById('closeTokModal');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function () {
+                            document.body.classList.remove('modal-open');
+                        });
+                    }
+
+                    modalWrap.addEventListener('click', function (e) {
+                        if (e.target === modalWrap) {
+                            document.body.classList.remove('modal-open');
+                        }
+                    });
+                });
+            }
+        })();
+    </script>
+
+    <script src="/app.js?v=3"></script>
 </body>
 
 </html>
