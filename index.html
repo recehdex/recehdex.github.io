@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <link rel="icon" type="image/png" href="https://cryptoreceh.com/favicon.png" />
+    <link rel="shortcut icon" type="image/png" href="https://cryptoreceh.com/favicon.png" />
+    <title>Receh DEX – Multichain Token Swap & Liquidity</title>
+    <meta name="description"
+        content="Receh DEX adalah decentralized exchange untuk swap, pair, dan likuiditas token di BNB Smart Chain. Cepat, ringan, dan mudah digunakan." />
+    <link rel="canonical" href="https://recehdex.github.io/">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-LURuJBM1.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-lqOQjAJ-.css">
+</head>
+
+<body>
+    <div class="bg-fx" aria-hidden="true"><i class="fx-a"></i><i class="fx-b"></i><i class="fx-c"></i><i
+            class="fx-grid"></i></div>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <nav class="navbar">
+        <a class="logo" href="./" aria-label="RECEH DEX home">
+            <img class="logo-image" src="/img/logo.png" alt="RECEH DEX" width="28" height="28"
+                decoding="async" />
+            <span class="logo-text">Receh<em>DEX</em></span>
+        </a>
+
+        <div class="nav-center" id="navCenter">
+            <button class="nav-link active" data-page="trade">Trade</button>
+            <button class="nav-link" data-page="swap" hidden>Swap</button>
+            <button class="nav-link" data-page="markets">Markets</button>
+            <button class="nav-link" data-page="liquidity">Liquidity</button>
+            <button class="nav-link" data-page="pool">Pool</button>
+            <button class="nav-link" data-page="admin" hidden>Admin</button>
+            <div class="nav-more" id="navMore">
+                <button class="nav-link nav-more-btn" id="navMoreBtn" type="button" aria-haspopup="true"
+                    aria-expanded="false">More <span aria-hidden="true">▾</span></button>
+                <div class="nav-more-menu" id="navMoreMenu" role="menu">
+                    <div class="menu-cap">Explore</div>
+                    <a role="menuitem" data-link="listing" href="https://dex.cryptoreceh.com/listing/">Listing</a>
+                    <a role="menuitem" data-link="markets" href="https://cryptoreceh.com/markets/">CEX Market</a>
+                    <a role="menuitem" data-link="staking" href="https://cryptoreceh.com/staking/"
+                        target="_blank">Staking</a>
+                    <a role="menuitem" data-link="launch" href="https://cryptoreceh.com/launchpad/" target="_blank">TokenLaunch</a>
+                    <a role="menuitem" href="https://bridge.cryptoreceh.com/" target="_blank">Bridge</a>
+                    <a role="menuitem" href="https://app.cryptoreceh.com/" target="_blank">CreateToken</a>
+                    <a role="menuitem" href="https://idrr.cryptoreceh.com/" target="_blank">IDRR Stable</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-end">
+
+            <div class="net-switch" id="netSwitch">
+                <button class="net-btn" id="netBtn" type="button" aria-label="Network" data-state="ok">
+                    <img class="net-logo" id="netBtnLogo" alt="" width="20" height="20" decoding="async" />
+                    <span class="net-btn-name" id="netBtnName">BSC</span>
+                    <span class="net-dot" aria-hidden="true"></span>
+                </button>
+            </div>
+
+            <button class="wallet-pill" id="walletBtn">
+                <svg class="wp-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20 7H5a2 2 0 0 1 0-4h13v4z" />
+                    <path d="M3 5v14a2 2 0 0 0 2 2h15V7" />
+                    <circle cx="16.5" cy="14" r="1.2" fill="currentColor" />
+                </svg>
+                <span class="wp-text" id="wpText">Connect</span>
+            </button>
+            <button class="burger" id="burgerBtn" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="mob-menu" id="mobMenu" role="dialog" aria-label="More">
+        <div class="mob-grab" aria-hidden="true"></div>
+        <button class="mob-link" data-page="admin" hidden>Admin</button>
+        <button class="mob-link" data-page="swap" hidden>Swap</button>
+        <div class="mob-cap">Explore</div>
+        <div class="mob-grid">
+            <a class="mob-tile" data-link="listing" href="https://dex.cryptoreceh.com/listing/"><i><svg
+                        viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+                    </svg></i><span>Listing</span></a>
+            <a class="mob-tile" data-link="markets" href="https://cryptoreceh.com/markets/"><i><svg viewBox="0 0 24 24"
+                        aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 11v5M12 8h.01" />
+                    </svg></i><span>CEX Markets</span></a>
+            <a class="mob-tile" data-link="staking" href="https://cryptoreceh.com/staking/" target="_blank"
+                rel="noopener"><i><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 2l9 5-9 5-9-5 9-5zM3 12l9 5 9-5M3 17l9 5 9-5" />
+                    </svg></i><span>Staking</span></a>
+            <a class="mob-tile" data-link="launch" href="https://cryptoreceh.com/launchpad/" target="_blank" rel="noopener"><i><svg
+                        viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            d="M20 12v9H4v-9M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z" />
+                    </svg></i><span>TokenLaunch</span></a>
+            <a class="mob-tile" href="https://bridge.cryptoreceh.com/" target="_blank" rel="noopener"><i><svg
+                        viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 17c0-6 4-9 9-9s9 3 9 9M3 17h18M7 17v-4M12 17V8M17 17v-4" />
+                    </svg></i><span>Bridge</span></a>
+            <a class="mob-tile" href="https://app.cryptoreceh.com/" target="_blank" rel="noopener"><i><svg
+                        viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 8v8M8 12h8" />
+                    </svg></i><span>CreateToken</span></a>
+            <a class="mob-tile" href="https://idrr.cryptoreceh.com/" target="_blank" rel="noopener"><i><svg
+                        viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </svg></i><span>IDRR Stable</span></a>
+        </div>
+        <div class="mob-wallet-area" id="mobWalletArea">
+            <button class="action-btn" id="mobConnectBtn">Connect Wallet</button>
+        </div>
+    </div>
+    <div class="mob-overlay" id="mobOverlay"></div>
+
+    <nav class="tabbar" id="tabbar" aria-label="Main navigation">
+        <button type="button" class="tab active" data-page="trade"><i aria-hidden="true"><svg viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path d="M7 4v13M7 17l-3-3M7 17l3-3" />
+                    <path d="M17 20V7M17 7l-3 3M17 7l3 3" />
+                </svg></i><span>Trade</span></button>
+        <button type="button" class="tab" data-page="swap" hidden><i aria-hidden="true"><svg viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path d="M7 4v13M7 17l-3-3M7 17l3-3" />
+                    <path d="M17 20V7M17 7l-3 3M17 7l3 3" />
+                </svg></i><span>Swap</span></button>
+        <button type="button" class="tab" data-page="markets"><i aria-hidden="true"><svg viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+                </svg></i><span>Markets</span></button>
+        <button type="button" class="tab" data-page="liquidity"><i aria-hidden="true"><svg viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path d="M12 3s6 6.2 6 10.5a6 6 0 0 1-12 0C6 9.2 12 3 12 3z" />
+                </svg></i><span>Liquidity</span></button>
+        <button type="button" class="tab" data-page="pool"><i aria-hidden="true"><svg viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <circle cx="9" cy="9" r="5" />
+                    <path d="M13.5 13.5A5 5 0 1 0 20 20a5 5 0 0 0-6.5-6.5z" />
+                </svg></i><span>Pool</span></button>
+        <button type="button" class="tab" id="tabMore" aria-label="More"><i aria-hidden="true"><svg viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <circle cx="5" cy="12" r="1.4" />
+                    <circle cx="12" cy="12" r="1.4" />
+                    <circle cx="19" cy="12" r="1.4" />
+                </svg></i><span>More</span></button>
+    </nav>
+
+    <main class="main-content" id="main">
+
+        <section class="page" id="page-swap">
+            <div class="page-hd">
+                <h1>Swap</h1>
+                <p id="swapSub">Instant token exchange · MultiChain</p>
+            </div>
+            <div class="center-wrap">
+                <div class="cyber-card">
+                    <div class="card-bar">
+                        <span class="bar-tag">Swap</span>
+                        <div class="bar-acts">
+                            <button class="icon-act" id="refreshBtn" title="Refresh price">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <polyline points="23 4 23 10 17 10" />
+                                    <polyline points="1 20 1 14 7 14" />
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                </svg>
+                            </button>
+                            <button class="icon-act" id="settingsBtn" title="Settings">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <circle cx="12" cy="12" r="3" />
+                                    <path
+                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="sett-panel" id="settPanel">
+                        <div class="sett-row">
+                            <span>Slippage</span>
+                            <div class="slip-btns">
+                                <button class="slip-b" data-s="0.1">0.1%</button>
+                                <button class="slip-b active" data-s="0.5">0.5%</button>
+                                <button class="slip-b" data-s="1.0">1%</button>
+                                <div class="slip-inp"><input type="number" id="customSlip" placeholder="—" min="0.01"
+                                        max="50" /><span>%</span></div>
+                            </div>
+                        </div>
+                        <div class="sett-row">
+                            <span>Deadline</span>
+                            <div class="deadline-inp"><input type="number" id="txDeadline" value="20" min="1"
+                                    max="4320" /><span>min</span></div>
+                        </div>
+                    </div>
+
+                    <div class="wrap-banner" id="wrapBanner" style="display:none"></div>
+
+                    <div class="tok-box" id="tokInBox">
+                        <div class="tok-top">
+                            <span class="tok-lbl">You Pay</span>
+                            <button class="bal-btn" id="balIn">Balance: —</button>
+                        </div>
+                        <div class="tok-mid">
+                            <input class="tok-amt" type="number" id="amountIn" placeholder="0.0" min="0"
+                                autocomplete="off" />
+                            <button class="tok-pick" id="pickIn">
+                                <img class="tok-logo" id="logoIn" src="" alt="" />
+                                <span id="symIn">Select</span>
+                                <svg class="caret" width="9" height="9" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="3">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="tok-bot">
+                            <div class="pcts">
+                                <button class="pct" data-p="25">25%</button>
+                                <button class="pct" data-p="50">50%</button>
+                                <button class="pct" data-p="75">75%</button>
+                                <button class="pct" data-p="100">MAX</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flip-row">
+                        <button class="flip-btn" id="flipBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <polyline points="19 12 12 19 5 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="tok-box" id="tokOutBox">
+                        <div class="tok-top">
+                            <span class="tok-lbl">You Receive</span>
+                            <button class="bal-btn" id="balOut">Balance: —</button>
+                        </div>
+                        <div class="tok-mid">
+                            <input class="tok-amt" type="number" id="amountOut" placeholder="0.0" readonly />
+                            <button class="tok-pick" id="pickOut">
+                                <img class="tok-logo" id="logoOut" src="" alt="" />
+                                <span id="symOut">Select</span>
+                                <svg class="caret" width="9" height="9" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="3">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="detail-box" id="swapDetails">
+                        <div class="detail-row"><span>Rate</span><span id="swapRate">—</span></div>
+                        <div class="detail-row"><span>Price Impact</span><span id="priceImpact">—</span></div>
+                        <div class="detail-row"><span>Min. Received</span><span id="minRcv">—</span></div>
+                        <div class="detail-row"><span data-swap-fee="label" data-tpl-label="Fee ({p}%)">Fee
+                                (0.25%)</span><span id="lpFee">—</span></div>
+                        <div class="detail-row"><span>Route</span><span id="swapRoute">—</span></div>
+                    </div>
+
+                    <button class="action-btn" id="swapBtn" disabled>Connect Wallet</button>
+                </div>
+
+                <div class="cyber-card txns-card">
+                    <div class="card-bar">
+                        <span class="bar-tag">Recent transactions</span>
+                        <button class="ghost-btn" id="clearTxs">Clear</button>
+                    </div>
+                    <div id="txsList">
+                        <p class="empty-msg">No transactions</p>
+                    </div>
+                </div>
+
+                <div class="cyber-card dex-info-card">
+                    <div class="dex-info-head">
+                        <div class="dex-info-title">
+                            <span class="dex-info-icon" aria-hidden="true">⌁</span>
+                            <div><strong>Execution</strong><span>Live swap parameters</span></div>
+                        </div>
+                        <span class="live-badge"><i></i> LIVE</span>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-stat">
+                            <span>Network</span>
+                            <strong id="infoNetwork">BNB Chain</strong>
+                            <small>Active chain</small>
+                        </div>
+                        <div class="info-stat">
+                            <span>Native</span>
+                            <strong id="infoNative">BNB</strong>
+                            <small>Gas asset</small>
+                        </div>
+                        <div class="info-stat">
+                            <span>Swap fee</span>
+                            <strong data-swap-fee="stat" data-tpl-stat="{p}%">0.25%</strong>
+                            <small>Per swap</small>
+                        </div>
+                        <div class="info-stat">
+                            <span>Slippage</span>
+                            <strong id="infoSlippage">0.50%</strong>
+                            <small>Max tolerance</small>
+                        </div>
+                    </div>
+                    <div class="info-note"><span class="info-note-icon">✓</span>
+                        <div><strong>On-chain quote</strong><span>Price, balance and pool data are read from the active
+                                network. Review the received amount before confirming.</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="page" id="page-liquidity">
+            <div class="page-hd">
+                <h1>Liquidity</h1>
+                <p data-swap-fee="earn" data-tpl-earn="Provide liquidity · Earn {p}% fees">Provide liquidity · Earn
+                    0.25% fees</p>
+            </div>
+            <div class="center-wrap single">
+                <div id="liqEarn"></div>
+                <div class="cyber-card">
+                    <div class="card-bar">
+                        <span class="bar-tag">Add liquidity</span>
+                        <button class="icon-act" id="liqSettBtn">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <circle cx="12" cy="12" r="3" />
+                                <path
+                                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="sett-panel" id="liqSettPanel">
+                        <div class="sett-row">
+                            <span>Slippage</span>
+                            <div class="slip-btns">
+                                <button class="slip-b" data-ls="0.1">0.1%</button>
+                                <button class="slip-b active" data-ls="0.5">0.5%</button>
+                                <button class="slip-b" data-ls="1.0">1%</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pair-select">
+                        <button class="pair-btn" id="liqPickA">
+                            <img class="pair-logo" id="liqLogoA" src="" alt="" />
+                            <span id="liqSymA">Select Token</span>
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="3">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <span class="plus-sep">+</span>
+                        <button class="pair-btn" id="liqPickB">
+                            <img class="pair-logo" id="liqLogoB" src="" alt="" />
+                            <span id="liqSymB">Select Token</span>
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="3">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div id="liqForm" class="hidden">
+                        <div class="tok-box">
+                            <div class="tok-top">
+                                <span class="tok-lbl" id="liqLblA">Token A</span>
+                                <button class="bal-btn" id="liqBalA">Balance: —</button>
+                            </div>
+                            <div class="tok-mid">
+                                <input class="tok-amt" type="number" id="liqAmtA" placeholder="0.0" min="0" />
+                                <button class="tok-pick sm" id="liqPickA2">
+                                    <img class="tok-logo" id="liqLogoA2" src="" alt="" />
+                                    <span id="liqSymA2">—</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flip-row"><span class="plus-chip">+</span></div>
+
+                        <div class="tok-box">
+                            <div class="tok-top">
+                                <span class="tok-lbl" id="liqLblB">Token B</span>
+                                <button class="bal-btn" id="liqBalB">Balance: —</button>
+                            </div>
+                            <div class="tok-mid">
+                                <input class="tok-amt" type="number" id="liqAmtB" placeholder="0.0" min="0" />
+                                <button class="tok-pick sm" id="liqPickB2">
+                                    <img class="tok-logo" id="liqLogoB2" src="" alt="" />
+                                    <span id="liqSymB2">—</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="detail-box" id="liqDetails">
+                            <div class="detail-row"><span>Rate</span><span id="liqRate">—</span></div>
+                            <div class="detail-row"><span>Share of Pool</span><span id="liqShare">—</span></div>
+                            <div class="detail-row"><span>Pool Status</span><span id="liqStatus">—</span></div>
+                        </div>
+
+                        <button class="action-btn" id="addLiqBtn" disabled>Add Liquidity</button>
+                    </div>
+
+                    <div class="empty-prompt" id="liqPrompt">
+                        <span class="ep-icon">⬡</span>
+                        <p>Select a token pair to begin</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="page" id="page-pool">
+            <div class="page-hd">
+                <h1>Pool</h1>
+                <p>Your liquidity positions</p>
+            </div>
+            <div class="center-wrap single">
+                <div class="pool-bar">
+                    <button class="action-btn sm" id="goAddLiqBtn">+ Add Liquidity</button>
+                    <button class="icon-act" id="refreshPoolBtn">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <polyline points="23 4 23 10 17 10" />
+                            <polyline points="1 20 1 14 7 14" />
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="poolList">
+                    <div class="cyber-card empty-pool">
+                        <div class="ep-icon">◈</div>
+                        <p>No positions found</p>
+                        <span>Connect wallet or add liquidity</span>
+                    </div>
+                </div>
+                <div class="import-strip">
+                    <span>Don't see your pool?</span>
+                    <button class="ghost-btn" id="importPoolBtn">Import Pool</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="page active" id="page-trade" aria-label="Trade" aria-busy="true">
+            <div class="tp boot-tp" data-state="empty" data-view="swap">
+                <section class="tp-hero">
+                    <div>
+                        <h1 id="bootHeroTitle">Trade on BNB Chain</h1>
+                        <p>Swap any pair, or open a market to follow its live on-chain chart.</p>
+                    </div>
+                    <div class="tp-hero-chips"><span class="chip live"><i></i>Live on-chain</span><span class="chip">Fee 0.25%</span></div>
+                </section>
+                <div class="tp-grid">
+                    <section class="tp-discover" data-sec="discover">
+                        <div class="mk-box compact">
+                            <div class="mk-top"><div class="mk-title"><b>Markets</b><small>Pools read from the chain</small></div></div>
+                            <ul class="mk-list">
+                                <li class="mk-row sk"><span class="sk-line"></span></li><li class="mk-row sk"><span class="sk-line"></span></li><li class="mk-row sk"><span class="sk-line"></span></li><li class="mk-row sk"><span class="sk-line"></span></li><li class="mk-row sk"><span class="sk-line"></span></li><li class="mk-row sk"><span class="sk-line"></span></li>
+                            </ul>
+                        </div>
+                    </section>
+                    <aside class="tp-ticket" data-sec="trade">
+                        <div class="tp-market"><div class="boot-card" aria-hidden="true"><span class="sk-line sm"></span><span class="sk-line"></span><span class="sk-line"></span><span class="sk-line btn"></span></div></div>
+                    </aside>
+                </div>
+            </div>
+        </section>
+        <section class="page" id="page-markets" aria-label="Markets"><div class="boot-page" aria-hidden="true"><span class="sk-line sm"></span><span class="sk-line"></span><span class="sk-line"></span><span class="sk-line"></span></div></section>
+        <section class="page" id="page-admin" aria-label="Admin"><div class="boot-page" aria-hidden="true"><span class="sk-line sm"></span><span class="sk-line"></span><span class="sk-line"></span></div></section>
+    </main>
+
+    <div class="modal-wrap" id="tokModalWrap">
+        <div class="modal" id="tokModal">
+            <div class="modal-hd token-modal-head">
+                <div>
+                    <span>Select Token</span>
+                    <small id="tokModalNetwork">BSC · BNB Chain</small>
+                </div>
+                <button class="x-btn" id="closeTokModal" aria-label="Close token selector">✕</button>
+            </div>
+            <div class="modal-search-bar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input type="text" id="tokSearch" placeholder="Search name or paste address…" autocomplete="off"
+                    autocorrect="off" />
+                <button class="x-btn-sm" id="clearSearch" style="display:none">✕</button>
+            </div>
+            <div class="common-row">
+                <span class="sec-lbl">Popular</span>
+                <div class="chip-list" id="commonChips"></div>
+            </div>
+            <div class="token-list-meta"><span>Available tokens</span><strong id="tokListCount">0 tokens</strong></div>
+            <div class="modal-div"></div>
+            <div class="tok-list-wrap" id="tokListWrap">
+                <div id="tokListInner">
+                    <div class="loading-row" id="loadingRow">Loading tokens…</div>
+                </div>
+            </div>
+            <div class="modal-ft">
+                <button class="ghost-btn full" id="manageBtn">⚙ Manage Token List</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-wrap" id="wdWrap">
+        <div class="modal sm">
+            <div class="modal-hd">
+                <span>My Wallet</span>
+                <button class="x-btn" id="closeWdModal">✕</button>
+            </div>
+            <div class="wd-body">
+                <div class="wd-addr" id="wdAddr">—</div>
+                <div class="wd-bal" id="wdBal">0 BNB</div>
+                <div class="wd-net" id="wdNet">BNB Chain · ID 56</div>
+                <div class="wd-acts">
+                    <a class="wd-act" id="wdExplorer" href="#" target="_blank">View on Explorer ↗</a>
+                    <button class="wd-act red" id="disconnectBtn">Disconnect</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-wrap" id="removeMWrap">
+        <div class="modal">
+            <div class="modal-hd">
+                <span>Remove Liquidity</span>
+                <button class="x-btn" id="closeRemoveM">✕</button>
+            </div>
+            <div class="remove-body">
+                <div class="pct-display">
+                    <span>Amount</span>
+                    <span class="pct-big" id="rmPctVal">50%</span>
+                </div>
+                <input type="range" class="range-inp" id="rmSlider" min="0" max="100" value="50" />
+                <div class="pcts center">
+                    <button class="pct" data-rp="25">25%</button>
+                    <button class="pct" data-rp="50">50%</button>
+                    <button class="pct" data-rp="75">75%</button>
+                    <button class="pct" data-rp="100">MAX</button>
+                </div>
+                <div class="detail-box" id="rmDetails">
+                    <div class="detail-row"><span id="rmSymA">Token A</span><span id="rmAmtA">—</span></div>
+                    <div class="detail-row"><span id="rmSymB">Token B</span><span id="rmAmtB">—</span></div>
+                </div>
+                <button class="action-btn" id="removeLiqBtn" disabled>Checking Approval…</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-wrap" id="importMWrap">
+        <div class="modal sm">
+            <div class="modal-hd">
+                <span>Import Pool</span>
+                <button class="x-btn" id="closeImportM">✕</button>
+            </div>
+            <div class="import-body">
+                <p class="hint-text">Select token pair to find an existing pool</p>
+                <div class="pair-select">
+                    <button class="pair-btn" id="importPickA">
+                        <img class="pair-logo" id="importLogoA" src="" alt="" style="display:none" />
+                        <span id="importSymA">Select</span>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                    </button>
+                    <span class="plus-sep">+</span>
+                    <button class="pair-btn" id="importPickB">
+                        <img class="pair-logo" id="importLogoB" src="" alt="" style="display:none" />
+                        <span id="importSymB">Select</span>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="detail-box" id="importDetails" style="display:none"></div>
+                <button class="action-btn" id="confirmImportBtn" disabled>Import Pool</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-wrap" id="manageMWrap">
+        <div class="modal">
+            <div class="modal-hd">
+                <span>Manage Tokens</span>
+                <button class="x-btn" id="closeManageM">✕</button>
+            </div>
+            <div class="manage-body">
+                <p class="sec-lbl">Import Custom Token</p>
+                <input type="text" class="text-inp" id="customAddr" placeholder="Paste contract address 0x…"
+                    autocomplete="off" />
+                <div id="customPreview" class="custom-preview hidden">
+                    <img id="prevLogo" src="" class="prev-logo" alt="" onerror="this.style.display='none'" />
+                    <div>
+                        <div id="prevName"></div>
+                        <div id="prevAddr" class="mono-sm"></div>
+                    </div>
+                </div>
+                <button class="action-btn sm" id="importCustomBtn">Import Token</button>
+                <div class="sep"></div>
+                <p class="sec-lbl">My Custom Tokens</p>
+                <div id="customTokList">
+                    <p class="empty-msg">None added</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tx-mask" id="txMask">
+        <div class="tx-card">
+            <div class="tx-spin"></div>
+            <div class="tx-title" id="txTitle">Processing…</div>
+            <div class="tx-chain" id="txChain">BSC · BNB Chain</div>
+            <div class="tx-msg" id="txMsg">Confirm in your wallet</div>
+        </div>
+    </div>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <script>
+        (function () {
+            try {
+                var q = new URLSearchParams(location.search), p = q.get('page');
+                if (['trade', 'markets', 'liquidity', 'pool', 'admin'].indexOf(p) < 0) p = 'trade';
+                var pages = document.querySelectorAll('.page'), i;
+                for (i = 0; i < pages.length; i++) pages[i].classList.remove('active');
+                var pg = document.getElementById('page-' + p); if (pg) pg.classList.add('active');
+                var links = document.querySelectorAll('.nav-link[data-page],.mob-link[data-page],.tab[data-page]');
+                for (i = 0; i < links.length; i++) links[i].classList.toggle('active', links[i].getAttribute('data-page') === p);
+                if (localStorage.getItem('rdex_admin_seen') === '1') {
+                    var ad = document.querySelectorAll('[data-page="admin"]');
+                    for (i = 0; i < ad.length; i++) ad[i].hidden = false;
+                }
+                var logo = document.getElementById('netBtnLogo');
+                if (logo) logo.src = 'https://raw.githubusercontent.com/recehdex/recehdex.github.io/refs/heads/main/images/bsc-logo-100x100.png';
+            } catch (e) { }
+        })();
+    </script>
+    <script>
+        (function () {
+            try {
+                if (navigator.serviceWorker) navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
+                if (window.caches) caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); });
+            } catch (e) { }
+        })();
+    </script>
+</body>
+
+</html>
